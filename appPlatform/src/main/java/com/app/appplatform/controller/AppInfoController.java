@@ -1,0 +1,236 @@
+package com.app.appplatform.controller;
+
+import com.app.appplatform.common.PageResult;
+import com.app.appplatform.common.Result;
+import com.app.appplatform.entity.ApkInfo;
+import com.app.appplatform.entity.AppInfo;
+import com.app.appplatform.service.AppInfoService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.*;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api")
+public class AppInfoController {
+
+    private final AppInfoService appInfoService;
+
+    @Autowired
+    public AppInfoController(AppInfoService appInfoService) {
+        this.appInfoService = appInfoService;
+    }
+
+    /**
+     * 上传APP文件
+     */
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Result<AppInfo> uploadApp(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam String appName,
+            @RequestParam String packageName,
+            @RequestParam String version,
+            @RequestParam String buildNumber,
+            @RequestParam String features,
+            @RequestParam(defaultValue = "false") boolean isBeta) throws IOException {
+
+        // 检查是否已存在相同包名和版本的应用
+        if (appInfoService.existsByPackageAndVersion(packageName, version)) {
+            return Result.error(409, "已存在相同包名和版本的应用");
+        }
+
+        AppInfo appInfo = new AppInfo();
+        appInfo.setAppName(appName);
+        appInfo.setPackageName(packageName);
+        appInfo.setBuildNumber(buildNumber);
+        appInfo.setVersion(version);
+        appInfo.setFeatures(features);
+        appInfo.setIsBeta(isBeta);
+
+        AppInfo savedApp = appInfoService.uploadApp(file, appInfo);
+        return Result.success("上传成功", savedApp);
+    }
+
+    /**
+     * 获取应用列表（支持分页和筛选）
+     * @param pageNum 页码，默认为1
+     * @param pageSize 每页数量，默认为10，最大100
+     * @param appName 应用名称（模糊查询）
+     * @param version 版本号（精确匹配）
+     * @param buildNumber 构建号（精确匹配）
+     * @param isBeta 是否测试版
+     * @return 分页应用列表
+     */
+    @GetMapping("/apps")
+    public Result<PageResult<AppInfo>> getAllApps(
+            @RequestParam(defaultValue = "1") int pageNum,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(required = false) String appName,
+            @RequestParam(required = false) String version,
+            @RequestParam(required = false) String buildNumber,
+            @RequestParam(required = false) Boolean isBeta) {
+
+        // 确保分页参数有效
+        pageNum = Math.max(1, pageNum);
+        pageSize = Math.min(100, Math.max(1, pageSize)); // 限制每页最多100条
+
+        PageResult<AppInfo> pageResult = appInfoService.getAllApps(
+            pageNum, 
+            pageSize, 
+            appName, 
+            version, 
+            buildNumber, 
+            isBeta
+        );
+        return Result.success(pageResult);
+    }
+
+    /**
+     * 根据包名获取应用列表
+     */
+    @GetMapping("/package/{packageName}")
+    public List<AppInfo> getAppsByPackageName(@PathVariable String packageName) {
+        return appInfoService.getAppsByPackageName(packageName);
+    }
+
+    /**
+     * 根据ID获取应用信息
+     */
+    @GetMapping("app/{id}")
+    public Result<AppInfo> getAppById(@PathVariable Integer id) {
+        AppInfo appInfo = appInfoService.getAppById(id);
+        if (appInfo == null) {
+            return Result.error(404, "应用不存在");
+        }
+        return Result.success(appInfo);
+    }
+
+    /**
+     * 下载APP文件
+     */
+    @GetMapping(value = "download/{id}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public ResponseEntity<Resource> downloadApp(@PathVariable Integer id) throws IOException {
+        AppInfo appInfo = appInfoService.getAppById(id);
+        if (appInfo == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // 增加下载次数
+        appInfoService.incrementDownloadCount(id);
+
+        try {
+            // 构建文件路径
+            Path filePath = Paths.get(appInfo.getPath());
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (!resource.exists() || !resource.isReadable()) {
+                throw new FileNotFoundException("文件不存在或无法访问: " + appInfo.getPath());
+            }
+
+            // 构建文件名
+            String filename = appInfo.getAppName() + "_" + appInfo.getVersion() + ".apk";
+            
+            // 对文件名进行URL编码
+            String encodedFilename = URLEncoder.encode(filename, StandardCharsets.UTF_8.toString())
+                .replaceAll("\\+", "%20");
+            
+            // 设置响应头
+            String contentDisposition = String.format(
+                "attachment; filename=\"%s\"; filename*=UTF-8''%s",
+                filename.replace("\"", "\\\""),
+                encodedFilename
+            );
+            
+            return ResponseEntity.ok()
+//                .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
+        } catch (FileNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN_VALUE)
+                    .body(new ByteArrayResource(e.getMessage().getBytes(StandardCharsets.UTF_8)));
+        }
+
+    }
+
+    /**
+     * 更新应用信息
+     * @param id 应用ID
+     * @param appName 应用名称
+     * @param packageName 包名
+     * @param version 版本号
+     * @param buildNumber 构建号
+     * @param features 功能描述
+     * @param isBeta 是否测试版
+     * @return 更新后的应用信息
+     */
+    @PutMapping(value = "update/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Result<AppInfo>> updateApp(
+            @PathVariable Integer id,
+            @RequestParam(required = false) String appName,
+            @RequestParam(required = false) String packageName,
+            @RequestParam(required = false) String version,
+            @RequestParam(required = false) String buildNumber,
+            @RequestParam(required = false) String features,
+            @RequestParam(required = false) Boolean isBeta) {
+        try {
+            // 获取现有应用信息
+            AppInfo existingApp = appInfoService.getAppById(id);
+            if (existingApp == null) {
+                return ResponseEntity.badRequest().body(Result.error(400, "应用不存在，ID: " + id));
+            }
+            
+            // 更新非空字段
+            if (appName != null) existingApp.setAppName(appName);
+            if (packageName != null) existingApp.setPackageName(packageName);
+            if (version != null) existingApp.setVersion(version);
+            if (buildNumber != null) existingApp.setBuildNumber(buildNumber);
+            if (features != null) existingApp.setFeatures(features);
+            if (isBeta != null) existingApp.setIsBeta(isBeta);
+            
+            // 更新应用信息
+            AppInfo updatedApp = appInfoService.updateAppInfo(existingApp);
+            return ResponseEntity.ok(Result.success("更新成功", updatedApp));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Result.error(400, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Result.error(500, "更新应用信息失败: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * 删除应用
+     * @param id 应用ID
+     * @return 操作结果
+     */
+    @RequestMapping(value = "delete/{id}")
+    public ResponseEntity<?> deleteApp(@PathVariable Integer id) {
+        try {
+            boolean deleted = appInfoService.deleteApp(id);
+            if (deleted) {
+                return ResponseEntity.ok(Result.success("删除成功"));
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Result.error(404, "应用不存在"));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Result.error(500, "删除应用失败: " + e.getMessage()));
+        }
+    }
+}
