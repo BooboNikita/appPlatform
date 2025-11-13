@@ -15,7 +15,7 @@ const service: AxiosInstance = axios.create({
 
 // 请求拦截器
 service.interceptors.request.use(
-  (config: AxiosRequestConfig) => {
+  (config: any) => {
     const userStore = useUserStore();
     // 如果用户已登录，添加token到请求头
     if (userStore.token) {

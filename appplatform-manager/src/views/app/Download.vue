@@ -26,22 +26,46 @@
                     <p>{{ latestApp.features }}</p>
                   </div>
                 </div>
-                <el-button
-                  type="primary"
-                  size="large"
-                  @click="handleDownload(latestApp)"
+                <div
+                  style="display: flex; gap: 10px; align-items: center"
+                  class="button-group"
                 >
-                  <el-icon><Download /></el-icon>
-                  下载最新版本
-                </el-button>
+                  <el-button
+                    :type="downloadingIds[latestApp.id] ? 'info' : 'primary'"
+                    size="large"
+                    :loading="downloadingIds[latestApp.id]"
+                    @click="handleDownload(latestApp)"
+                    :disabled="downloadingIds[latestApp.id]"
+                  >
+                    <el-icon><Download /></el-icon>
+                    {{
+                      downloadingIds[latestApp.id]
+                        ? "下载中..."
+                        : "下载最新版本"
+                    }}
+                  </el-button>
+                  <el-button
+                    v-if="downloadingIds[latestApp.id]"
+                    type="danger"
+                    size="large"
+                    @click="handleCancelDownload(latestApp.id)"
+                  >
+                    取消
+                  </el-button>
+                </div>
+                <el-progress
+                  v-if="downloadingIds[latestApp.id]"
+                  :percentage="downloadProgress[latestApp.id] || 0"
+                  style="margin-top: 16px"
+                />
               </div>
             </div>
           </div>
 
           <!-- 历史版本列表 -->
-          <div v-if="appList.length > 0" class="history-section">
+          <div v-if="appList.length > 1" class="history-section">
             <h3 class="section-title">历史版本</h3>
-            <el-table :data="appList" stripe style="width: 100%">
+            <el-table :data="appList.slice(1)" stripe style="width: 100%">
               <el-table-column label="文件名" min-width="200">
                 <template #default="{ row }">
                   <el-link type="primary" @click="handleDownload(row)">
@@ -85,22 +109,48 @@
                     <p>{{ latestBetaApp.features }}</p>
                   </div>
                 </div>
-                <el-button
-                  type="warning"
-                  size="large"
-                  @click="handleDownload(latestBetaApp)"
+                <div
+                  style="display: flex; gap: 10px; align-items: center"
+                  class="button-group"
                 >
-                  <el-icon><Download /></el-icon>
-                  下载Beta版本
-                </el-button>
+                  <el-button
+                    :type="
+                      downloadingIds[latestBetaApp.id] ? 'info' : 'warning'
+                    "
+                    size="large"
+                    :loading="downloadingIds[latestBetaApp.id]"
+                    @click="handleDownload(latestBetaApp)"
+                    :disabled="downloadingIds[latestBetaApp.id]"
+                  >
+                    <el-icon><Download /></el-icon>
+                    {{
+                      downloadingIds[latestBetaApp.id]
+                        ? "下载中..."
+                        : "下载Beta版本"
+                    }}
+                  </el-button>
+                  <el-button
+                    v-if="downloadingIds[latestBetaApp.id]"
+                    type="danger"
+                    size="large"
+                    @click="handleCancelDownload(latestBetaApp.id)"
+                  >
+                    取消
+                  </el-button>
+                </div>
+                <el-progress
+                  v-if="downloadingIds[latestBetaApp.id]"
+                  :percentage="downloadProgress[latestBetaApp.id] || 0"
+                  style="margin-top: 16px"
+                />
               </div>
             </div>
           </div>
 
           <!-- Beta 历史版本列表 -->
-          <div v-if="betaAppList.length > 0" class="history-section">
+          <div v-if="betaAppList.length > 1" class="history-section">
             <h3 class="section-title">历史版本</h3>
-            <el-table :data="betaAppList" stripe style="width: 100%">
+            <el-table :data="betaAppList.slice(1)" stripe style="width: 100%">
               <el-table-column label="文件名" min-width="200">
                 <template #default="{ row }">
                   <el-link type="primary" @click="handleDownload(row)">
@@ -126,10 +176,10 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, reactive } from "vue";
 import { ElMessage } from "element-plus";
 import { Download } from "@element-plus/icons-vue";
-import { getAppList, downloadApp } from "@/api/app";
+import { getAppList, downloadApp, cancelDownload } from "@/api/app";
 import { formatDate } from "@/utils/index";
 
 interface AppInfo {
@@ -149,6 +199,8 @@ const activeTab = ref("release");
 const appList = ref<AppInfo[]>([]);
 const betaAppList = ref<AppInfo[]>([]);
 const loading = ref(false);
+const downloadingIds = reactive<Record<number, boolean>>({});
+const downloadProgress = reactive<Record<number, number>>({});
 
 // 获取最新正式版应用
 const latestApp = computed(() => {
@@ -170,15 +222,17 @@ const fetchAppList = async () => {
     const allApps = data.list || [];
     const released = allApps
       .filter((app: AppInfo) => !app.isBeta)
-      .sort(
-        (a: AppInfo, b: AppInfo) =>
-          new Date(b.createTime).getTime() - new Date(a.createTime).getTime()
+      .sort((a: AppInfo, b: AppInfo) =>
+        b.version.localeCompare(a.version, undefined, {
+          numeric: true,
+        })
       );
     const beta = allApps
       .filter((app: AppInfo) => app.isBeta)
-      .sort(
-        (a: AppInfo, b: AppInfo) =>
-          new Date(b.createTime).getTime() - new Date(a.createTime).getTime()
+      .sort((a: AppInfo, b: AppInfo) =>
+        b.version.localeCompare(a.version, undefined, {
+          numeric: true,
+        })
       );
 
     appList.value = released;
@@ -194,12 +248,32 @@ const fetchAppList = async () => {
 // 下载应用
 const handleDownload = async (row: AppInfo) => {
   try {
-    await downloadApp(row.id, `${row.appName}_v${row.version}.apk`);
+    downloadingIds[row.id] = true;
+    downloadProgress[row.id] = 0;
+
+    await downloadApp(
+      row.id,
+      `${row.appName}_v${row.version}.apk`,
+      (progress: number) => {
+        downloadProgress[row.id] = progress;
+      }
+    );
+
     ElMessage.success("下载成功");
   } catch (error) {
     console.error("下载失败:", error);
     ElMessage.error("下载失败");
+  } finally {
+    downloadingIds[row.id] = false;
+    downloadProgress[row.id] = 0;
   }
+};
+
+// 取消下载
+const handleCancelDownload = (id: number) => {
+  cancelDownload(id);
+  downloadingIds[id] = false;
+  downloadProgress[id] = 0;
 };
 
 // Tab 切换
@@ -347,6 +421,10 @@ onMounted(() => {
           padding: 12px 30px;
           min-width: 160px;
         }
+
+        .button-group {
+          flex-wrap: wrap;
+        }
       }
 
       @media (max-width: 768px) {
@@ -378,6 +456,7 @@ onMounted(() => {
 
             .app-features {
               padding: 12px 16px;
+              text-align: left;
 
               strong {
                 margin-bottom: 8px;
@@ -389,6 +468,16 @@ onMounted(() => {
             align-self: center;
             width: 100%;
             max-width: 200px;
+          }
+
+          .button-group {
+            flex-direction: column;
+            width: 100%;
+
+            :deep(.el-button) {
+              width: 100%;
+              max-width: 100%;
+            }
           }
         }
       }

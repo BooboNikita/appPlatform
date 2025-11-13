@@ -2,25 +2,22 @@ package com.app.appplatform.controller;
 
 import com.app.appplatform.common.PageResult;
 import com.app.appplatform.common.Result;
-import com.app.appplatform.entity.ApkInfo;
 import com.app.appplatform.entity.AppInfo;
 import com.app.appplatform.service.AppInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.io.FileNotFoundException;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -121,7 +118,7 @@ public class AppInfoController {
      * 下载APP文件
      */
     @GetMapping(value = "download/{id}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<Resource> downloadApp(@PathVariable Integer id) throws IOException {
+    public ResponseEntity<StreamingResponseBody> downloadApp(@PathVariable Integer id, @RequestHeader(value = "Range", required = false) String rangeHeader) throws IOException {
         AppInfo appInfo = appInfoService.getAppById(id);
         if (appInfo == null) {
             return ResponseEntity.notFound().build();
@@ -130,40 +127,45 @@ public class AppInfoController {
         // 增加下载次数
         appInfoService.incrementDownloadCount(id);
 
-        try {
-            // 构建文件路径
-            Path filePath = Paths.get(appInfo.getPath());
-            Resource resource = new UrlResource(filePath.toUri());
+        Path filePath = Paths.get(appInfo.getPath());
+        File file = filePath.toFile();
+        long fileLength = file.length();
 
-            if (!resource.exists() || !resource.isReadable()) {
-                throw new FileNotFoundException("文件不存在或无法访问: " + appInfo.getPath());
-            }
-
-            // 构建文件名
-            String filename = appInfo.getAppName() + "_" + appInfo.getVersion() + ".apk";
-            
-            // 对文件名进行URL编码
-            String encodedFilename = URLEncoder.encode(filename, StandardCharsets.UTF_8.toString())
+        // 设置响应头
+        String filename = appInfo.getAppName() + "_" + appInfo.getVersion() + ".apk";
+        String encodedFilename = URLEncoder.encode(filename, StandardCharsets.UTF_8.toString())
                 .replaceAll("\\+", "%20");
-            
-            // 设置响应头
-            String contentDisposition = String.format(
+
+        String contentDisposition = String.format(
                 "attachment; filename=\"%s\"; filename*=UTF-8''%s",
                 filename.replace("\"", "\\\""),
                 encodedFilename
-            );
-            
-            return ResponseEntity.ok()
-//                .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
+        );
+
+        // 创建流式响应体
+        StreamingResponseBody responseBody = outputStream -> {
+            try (FileInputStream fis = new FileInputStream(file)) {
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                long totalBytesRead = 0;
+
+                while ((bytesRead = fis.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                    totalBytesRead += bytesRead;
+                    // 可以在这里记录下载进度
+                    // 实际项目中可以通过WebSocket或事件总线将进度推送到前端
+                    int progress = (int) ((totalBytesRead * 100) / fileLength);
+                    System.out.println("下载进度: " + progress + "%");
+                }
+                outputStream.flush();
+            }
+        };
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
+                .contentLength(fileLength)
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(resource);
-        } catch (FileNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN_VALUE)
-                    .body(new ByteArrayResource(e.getMessage().getBytes(StandardCharsets.UTF_8)));
-        }
+                .body(responseBody);
 
     }
 

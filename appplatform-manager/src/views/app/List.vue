@@ -46,7 +46,6 @@
 
     <el-table v-loading="loading" :data="appList" border style="width: 100%">
       <el-table-column prop="appName" label="应用名称" min-width="120" />
-      <!-- <el-table-column prop="packageName" label="包名" min-width="180" /> -->
       <el-table-column prop="version" label="版本号" width="120" />
       <el-table-column prop="buildNumber" label="构建号" width="100" />
       <el-table-column prop="size" label="大小" width="100" />
@@ -63,17 +62,38 @@
           {{ formatDate(row.createTime) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="250" fixed="right">
+      <el-table-column label="操作" width="400" fixed="right">
         <template #default="{ row }">
-          <el-button type="primary" size="small" @click="handleDownload(row)">
-            下载
-          </el-button>
-          <el-button type="warning" size="small" @click="handleEdit(row)">
-            修改
-          </el-button>
-          <el-button type="danger" size="small" @click="handleDelete(row)">
-            删除
-          </el-button>
+          <div class="operation-cell">
+            <el-button
+              :type="downloadingIds[row.id] ? 'info' : 'primary'"
+              size="small"
+              :loading="downloadingIds[row.id]"
+              @click="handleDownload(row)"
+              :disabled="downloadingIds[row.id]"
+            >
+              {{ downloadingIds[row.id] ? "下载中..." : "下载" }}
+            </el-button>
+            <el-button
+              v-if="downloadingIds[row.id]"
+              type="danger"
+              size="small"
+              @click="handleCancelDownload(row.id)"
+            >
+              取消
+            </el-button>
+            <el-button type="warning" size="small" @click="handleEdit(row)">
+              修改
+            </el-button>
+            <el-button type="danger" size="small" @click="handleDelete(row)">
+              删除
+            </el-button>
+          </div>
+          <el-progress
+            v-if="downloadingIds[row.id]"
+            :percentage="downloadProgress[row.id] || 0"
+            style="margin-top: 8px"
+          />
         </template>
       </el-table-column>
     </el-table>
@@ -97,7 +117,7 @@ import { ref, reactive, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Plus } from "@element-plus/icons-vue";
-import { getAppList, deleteApp, downloadApp } from "@/api/app";
+import { getAppList, deleteApp, downloadApp, cancelDownload } from "@/api/app";
 import { formatDate } from "@/utils/index";
 
 interface AppInfo {
@@ -116,6 +136,8 @@ const router = useRouter();
 const loading = ref(false);
 const appList = ref<AppInfo[]>([]);
 const total = ref(0);
+const downloadingIds = reactive<Record<number, boolean>>({});
+const downloadProgress = reactive<Record<number, number>>({});
 
 const queryParams = reactive({
   pageNum: 1,
@@ -129,8 +151,8 @@ const queryParams = reactive({
 const fetchAppList = async () => {
   try {
     loading.value = true;
-    const { data, code } = await getAppList(queryParams);
-    console.log("应用列表数据:", data, code);
+    const { data } = await getAppList(queryParams);
+    console.log("应用列表数据:", data);
     appList.value = data.list;
     total.value = data.total;
   } catch (error) {
@@ -183,15 +205,38 @@ const handleEdit = (row: AppInfo) => {
 // 下载应用
 const handleDownload = async (row: AppInfo) => {
   try {
-    await downloadApp(row.id, `${row.appName}_v${row.version}.apk`);
+    downloadingIds[row.id] = true;
+    downloadProgress[row.id] = 0;
+
+    await downloadApp(
+      row.id,
+      `${row.appName}_v${row.version}${row.isBeta ? "_beta" : ""}.apk`,
+      (progress: number) => {
+        downloadProgress[row.id] = progress;
+      }
+    );
+
     // 更新下载次数
     const app = appList.value.find((item) => item.id === row.id);
     if (app) {
       app.downloadTimes += 1;
     }
+    ElMessage.success("下载成功");
   } catch (error) {
     console.error("下载失败:", error);
+    ElMessage.error("下载失败");
+  } finally {
+    downloadingIds[row.id] = false;
+    downloadProgress[row.id] = 0;
   }
+};
+
+// 取消下载
+const handleCancelDownload = (id: number) => {
+  cancelDownload(id);
+  downloadingIds[id] = false;
+  downloadProgress[id] = 0;
+  ElMessage.warning("下载已取消");
 };
 
 // 删除应用
@@ -236,6 +281,12 @@ onMounted(() => {
   .pagination-container {
     margin-top: 20px;
     text-align: right;
+  }
+
+  .operation-cell {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
   }
 }
 </style>
