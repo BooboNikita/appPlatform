@@ -91,9 +91,9 @@ const isCollapse = ref(false);
 const user = computed(() => userStore.userInfo);
 
 const routes = computed(() => {
-  return (
-    router.options.routes.find((item) => item.path === "/")?.children || []
-  );
+  const root =
+    router.options.routes.find((item) => item.path === "/")?.children || [];
+  return root.filter((item) => !item.meta?.hiddenInMenu);
 });
 
 const matched = computed(() => {

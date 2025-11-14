@@ -35,13 +35,15 @@ interface PageResult<T> {
   pageSize: number;
 }
 
+const prefix = "/api-app";
+
 // 获取应用列表
 export const getAppList = (params: PageParams) => {
-  return request.get<PageResult<AppInfo>>("/apps", { params });
+  return request.get<PageResult<AppInfo>>(`${prefix}/apps`, { params });
 };
 
 export const getAppById = (id: number) => {
-  return request.get<AppInfo>(`/app/${id}`);
+  return request.get<AppInfo>(`${prefix}/app/${id}`);
 };
 
 // 上传应用
@@ -49,7 +51,7 @@ export const uploadApp = (
   data: FormData,
   onUploadProgress?: (progressEvent: AxiosProgressEvent) => void
 ) => {
-  return request.post("/upload", data, {
+  return request.post(`${prefix}/upload`, data, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
@@ -62,7 +64,7 @@ export const updateApp = (
   data: FormData,
   onUploadProgress?: (progressEvent: AxiosProgressEvent) => void
 ) => {
-  return request.put(`/update/${id}`, data, {
+  return request.put(`${prefix}/update/${id}`, data, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
@@ -72,7 +74,7 @@ export const updateApp = (
 
 // 删除应用
 export const deleteApp = (id: number) => {
-  return request.delete(`/delete/${id}`);
+  return request.delete(`${prefix}/delete/${id}`);
 };
 
 // 下载应用
@@ -86,7 +88,7 @@ export const downloadApp = (
   downloadCancelTokens.set(id, source);
 
   return request
-    .get(`/download/${id}`, {
+    .get(`${prefix}/download/${id}`, {
       responseType: "blob",
       timeout: 0,
       cancelToken: source.token,

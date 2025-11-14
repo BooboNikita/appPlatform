@@ -34,19 +34,16 @@ service.interceptors.request.use(
 service.interceptors.response.use(
   (response: AxiosResponse) => {
     const res = response.data;
+    // console.log("Response Data:", res);
 
     // 如果返回的是文件流，直接返回
     if (response.config.responseType === "blob") {
       return response;
     }
 
-    // 如果返回的是数组或不是对象结构，直接返回（兼容服务端直接返回数据的情况）
-    if (Array.isArray(res) || typeof res !== "object" || res === null) {
-      return { data: res, code: 200, message: "success" };
-    }
-
+    console.log("Processed Response Data:", typeof res);
     // 根据业务状态码处理
-    if (res.code !== 200) {
+    if (res.code !== 200 && res.status != 200) {
       ElMessage.error(res.msg || res.message || "系统错误");
       // 创建一个包含完整响应数据的错误对象
       const error = new Error(res.msg || res.message || "Error");

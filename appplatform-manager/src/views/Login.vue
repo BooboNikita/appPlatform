@@ -46,7 +46,7 @@
             </el-input>
           </el-form-item>
 
-          <el-form-item prop="code">
+          <!-- <el-form-item prop="code">
             <div class="code-container">
               <el-input
                 v-model="loginForm.code"
@@ -65,7 +65,7 @@
                 @click="refreshCaptcha"
               />
             </div>
-          </el-form-item>
+          </el-form-item> -->
 
           <el-checkbox v-model="loginForm.rememberMe" class="remember-me">
             记住我
@@ -183,7 +183,7 @@ onMounted(() => {
     }
 
     .login-form {
-      width: 50%;
+      width: 80%;
       padding: 60px 40px;
       display: flex;
       flex-direction: column;

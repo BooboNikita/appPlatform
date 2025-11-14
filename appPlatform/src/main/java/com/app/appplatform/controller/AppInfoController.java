@@ -20,7 +20,7 @@ import java.nio.file.Paths;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api-app")
 public class AppInfoController {
 
     private final AppInfoService appInfoService;
