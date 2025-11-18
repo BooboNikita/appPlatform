@@ -8,6 +8,8 @@ export interface LogItem {
   path: string; // comma separated file urls
   appname: string;
   version: string;
+  imageUrl: string;
+  problem: string;
 }
 
 interface PageParams {

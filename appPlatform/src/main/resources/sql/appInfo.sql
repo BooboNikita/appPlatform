@@ -1,8 +1,8 @@
-create database app_platform;
+# create database app_platform;
 use app_platform;
 
 
-drop table app_info;
+drop table if exists app_info;
 create table app_info
 (
     id            int primary key auto_increment,
@@ -19,3 +19,6 @@ create table app_info
     deleted       boolean      not null default false
 );
 
+ALTER TABLE app_info
+    MODIFY COLUMN id INT AUTO_INCREMENT,
+    ADD PRIMARY KEY (id);

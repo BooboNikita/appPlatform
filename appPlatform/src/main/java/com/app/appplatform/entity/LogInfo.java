@@ -12,4 +12,6 @@ public class LogInfo {
     private String path;  // 多个文件路径用逗号分隔
     private String appName;
     private String version;
+    private String imageUrls;
+    private String problem;
 }

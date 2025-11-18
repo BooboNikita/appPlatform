@@ -43,7 +43,9 @@ public class LogController {
             @RequestParam String username,
             @RequestParam String nickname,
             @RequestParam String appName,
-            @RequestParam String version) throws IOException {
+            @RequestParam String version,
+            @RequestParam String imageUrls,
+            @RequestParam String problem) throws IOException {
 
         // 确保上传目录存在
         File dir = new File(uploadDir);
@@ -73,6 +75,8 @@ public class LogController {
         logInfo.setVersion(version);
         logInfo.setPath(filePaths.toString());
         logInfo.setUploadTime(new Date());
+        logInfo.setImageUrls(imageUrls);
+        logInfo.setProblem(problem);
 
         logService.save(logInfo);
         return ResponseEntity.ok()

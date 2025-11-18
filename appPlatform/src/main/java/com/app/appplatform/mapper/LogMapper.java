@@ -8,13 +8,13 @@ import java.util.List;
 @Mapper
 public interface LogMapper {
     
-    @Insert("INSERT INTO log_info (username, nickname, upload_time, path, app_name, version) " +
-           "VALUES (#{username}, #{nickname}, #{uploadTime}, #{path}, #{appName}, #{version})")
+    @Insert("INSERT INTO log_info (username, nickname, upload_time, path, app_name, version, imageUrls, problem) " +
+           "VALUES (#{username}, #{nickname}, #{uploadTime}, #{path}, #{appName}, #{version}, #{imageUrls}, #{problem})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void insert(LogInfo logInfo);
     
     @Update("UPDATE log_info SET username=#{username}, nickname=#{nickname}, " +
-           "upload_time=#{uploadTime}, path=#{path}, app_name=#{appName}, version=#{version} " +
+           "upload_time=#{uploadTime}, path=#{path}, app_name=#{appName}, version=#{version}, imageUrls=#{imageUrls}, problem=#{problem} " +
            "WHERE id=#{id}")
     void update(LogInfo logInfo);
     

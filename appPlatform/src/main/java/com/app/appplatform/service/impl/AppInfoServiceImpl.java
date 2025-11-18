@@ -24,8 +24,8 @@ import java.util.*;
 public class AppInfoServiceImpl implements AppInfoService {
 
     private final AppInfoMapper appInfoMapper;
-    
-    @Value("${app.upload.dir}")
+
+    @Value("${app.upload.dir}/app")
     private String uploadDir;
 
     public AppInfoServiceImpl(AppInfoMapper appInfoMapper) {
