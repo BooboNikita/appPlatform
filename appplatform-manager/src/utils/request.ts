@@ -5,6 +5,7 @@ import axios, {
 } from "axios";
 import { ElMessage } from "element-plus";
 import { useUserStore } from "@/stores/user";
+import router from "@/router";
 
 // 创建axios实例
 const service: AxiosInstance = axios.create({
@@ -34,14 +35,11 @@ service.interceptors.request.use(
 service.interceptors.response.use(
   (response: AxiosResponse) => {
     const res = response.data;
-    // console.log("Response Data:", res);
 
     // 如果返回的是文件流，直接返回
     if (response.config.responseType === "blob") {
       return response;
     }
-
-    console.log("Processed Response Data:", typeof res);
     // 根据业务状态码处理
     if (res.code !== 200 && res.status != 200) {
       ElMessage.error(res.msg || res.message || "系统错误");
@@ -70,7 +68,7 @@ service.interceptors.response.use(
         case 401:
           // 未授权，跳转到登录页
           useUserStore().logout();
-          window.location.href = "/login";
+          router.replace("/login");
           break;
         case 403:
           ElMessage.error("没有权限访问该资源");

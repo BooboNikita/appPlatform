@@ -96,8 +96,8 @@ const router = useRouter();
 const userStore = useUserStore();
 
 const loginForm = reactive({
-  username: "admin",
-  password: "123456",
+  username: "",
+  password: "",
   code: "1234",
   rememberMe: false,
 });
@@ -123,6 +123,13 @@ const handleLogin = async () => {
   try {
     loading.value = true;
     await userStore.login(loginForm);
+    if (loginForm.rememberMe) {
+      localStorage.setItem("rememberedUsername", loginForm.username);
+      localStorage.setItem("rememberedPassword", loginForm.password);
+    } else {
+      localStorage.removeItem("rememberedUsername");
+      localStorage.removeItem("rememberedPassword");
+    }
     router.push("/");
   } catch (error) {
     console.error("Login error:", error);
@@ -134,6 +141,12 @@ const handleLogin = async () => {
 
 onMounted(() => {
   refreshCaptcha();
+  const rememberedUsername = localStorage.getItem("rememberedUsername");
+  if (rememberedUsername) {
+    loginForm.username = rememberedUsername;
+    loginForm.password = localStorage.getItem("rememberedPassword") || "";
+    loginForm.rememberMe = true;
+  }
 });
 </script>
 

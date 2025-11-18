@@ -4,10 +4,12 @@ import com.app.appplatform.common.PageResult;
 import com.app.appplatform.common.Result;
 import com.app.appplatform.entity.LogInfo;
 import com.app.appplatform.service.LogService;
+import jakarta.annotation.security.PermitAll;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,6 +37,7 @@ public class LogController {
     /**
      * 上传日志文件
      */
+    @PermitAll()
     @PostMapping(value = "/upload",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)

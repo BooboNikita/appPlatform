@@ -52,8 +52,12 @@
         <div class="right-menu">
           <el-dropdown>
             <span class="el-dropdown-link">
-              <!-- <el-avatar :size="30" :src="user.avatar" /> -->
-              <!-- <span class="username">{{ user.name }}</span> -->
+              <el-image
+                :src="user?.avatar"
+                fit="cover"
+                style="width: 30px; border-radius: 50%"
+              />
+              <span class="username">{{ user?.username }}</span>
             </span>
             <template #dropdown>
               <el-dropdown-menu>
@@ -208,6 +212,8 @@ const handleLogout = () => {
         .username {
           margin-left: 10px;
           color: #606266;
+          font-weight: 600;
+          font-family: sans-serif;
         }
       }
     }

@@ -37,9 +37,9 @@ export const useUserStore = defineStore("user", () => {
   // 登出
   const logout = async () => {
     try {
-      await logoutApi();
+      // await logoutApi();
       resetToken();
-      router.push("/login");
+      // router.push("/login");
     } catch (error) {
       console.error("Logout error:", error);
     }

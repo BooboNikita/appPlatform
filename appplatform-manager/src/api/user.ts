@@ -11,7 +11,7 @@ export interface UserInfo {
 
 // 登录接口
 export const login = (data: LoginForm) => {
-  return request.post<{ token: string }>("/login", data);
+  return request.post<{ token: string }>("/auth/login", data);
 };
 
 // 登出接口
@@ -21,5 +21,5 @@ export const logout = () => {
 
 // 获取用户信息接口
 export const getInfo = () => {
-  return request.get<UserInfo>("/userinfo");
+  return request.get<UserInfo>("/auth/userinfo");
 };

@@ -4,6 +4,7 @@ import com.app.appplatform.common.PageResult;
 import com.app.appplatform.common.Result;
 import com.app.appplatform.entity.AppInfo;
 import com.app.appplatform.service.AppInfoService;
+import jakarta.annotation.security.PermitAll;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -70,6 +71,7 @@ public class AppInfoController {
      * @param isBeta 是否测试版
      * @return 分页应用列表
      */
+    @PermitAll
     @GetMapping("/apps")
     public Result<PageResult<AppInfo>> getAllApps(
             @RequestParam(defaultValue = "1") int pageNum,
@@ -97,6 +99,7 @@ public class AppInfoController {
     /**
      * 根据包名获取应用列表
      */
+    @PermitAll
     @GetMapping("/package/{packageName}")
     public List<AppInfo> getAppsByPackageName(@PathVariable String packageName) {
         return appInfoService.getAppsByPackageName(packageName);
@@ -106,6 +109,7 @@ public class AppInfoController {
      * 根据ID获取应用信息
      */
     @GetMapping("app/{id}")
+    @PermitAll
     public Result<AppInfo> getAppById(@PathVariable Integer id) {
         AppInfo appInfo = appInfoService.getAppById(id);
         if (appInfo == null) {
@@ -117,6 +121,7 @@ public class AppInfoController {
     /**
      * 下载APP文件
      */
+    @PermitAll
     @GetMapping(value = "download/{id}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<StreamingResponseBody> downloadApp(@PathVariable Integer id, @RequestHeader(value = "Range", required = false) String rangeHeader) throws IOException {
         AppInfo appInfo = appInfoService.getAppById(id);
