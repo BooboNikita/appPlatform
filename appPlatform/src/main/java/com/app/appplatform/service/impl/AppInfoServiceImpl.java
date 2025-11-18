@@ -1,7 +1,7 @@
 package com.app.appplatform.service.impl;
 
 import com.app.appplatform.common.PageResult;
-import com.app.appplatform.entity.ApkInfo;
+import com.app.appplatform.dto.AppInfoDto;
 import com.app.appplatform.entity.AppInfo;
 import com.app.appplatform.mapper.AppInfoMapper;
 import com.app.appplatform.service.AppInfoService;
@@ -9,16 +9,15 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class AppInfoServiceImpl implements AppInfoService {
@@ -30,6 +29,31 @@ public class AppInfoServiceImpl implements AppInfoService {
 
     public AppInfoServiceImpl(AppInfoMapper appInfoMapper) {
         this.appInfoMapper = appInfoMapper;
+    }
+
+    /**
+     * 将 AppInfo 转换为 AppInfoDto
+     * @param appInfo AppInfo 对象
+     * @return 转换后的 AppInfoDto 对象
+     */
+    private AppInfoDto convertToAppInfoDto(AppInfo appInfo) {
+        if (appInfo == null) {
+            return null;
+        }
+        
+        AppInfoDto dto = new AppInfoDto();
+        dto.setId(appInfo.getId());
+        dto.setAppName(appInfo.getAppName());
+        dto.setPackageName(appInfo.getPackageName());
+        dto.setVersion(appInfo.getVersion());
+        dto.setBuildNumber(appInfo.getBuildNumber());
+        dto.setFeatures(appInfo.getFeatures());
+        dto.setIsBeta(appInfo.getIsBeta());
+        dto.setCreateTime(appInfo.getCreateTime());
+        dto.setDownloadTimes(appInfo.getDownloadTimes());
+        dto.setSize(appInfo.getSize());
+        
+        return dto;
     }
 
     @Override
@@ -75,7 +99,7 @@ public class AppInfoServiceImpl implements AppInfoService {
     }
 
     @Override
-    public PageResult<AppInfo> getAllApps(int pageNum, int pageSize, String appName, String version, String buildNumber, Boolean isBeta) {
+    public PageResult<AppInfoDto> getAllApps(int pageNum, int pageSize, String appName, String version, String buildNumber, Boolean isBeta) {
         // 设置分页参数
         PageHelper.startPage(pageNum, pageSize);
 
@@ -86,9 +110,15 @@ public class AppInfoServiceImpl implements AppInfoService {
             // 使用PageInfo获取分页信息
             PageInfo<AppInfo> pageInfo = new PageInfo<>(listInfo);
 
+            // 转换为 DTO 列表
+            List<AppInfoDto> dtoList = pageInfo.getList().stream()
+                    .map(this::convertToAppInfoDto)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
             // 构建并返回分页结果
             return new PageResult<>(
-                    pageInfo.getList(),   // 当前页数据
+                    dtoList,              // 当前页数据（已转换为 DTO）
                     pageInfo.getTotal(),  // 总记录数
                     pageInfo.getPageNum(),   // 当前页码
                     pageInfo.getPageSize(),  // 每页数量

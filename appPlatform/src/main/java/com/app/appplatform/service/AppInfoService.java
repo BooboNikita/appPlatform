@@ -1,13 +1,12 @@
 package com.app.appplatform.service;
 
 import com.app.appplatform.common.PageResult;
-import com.app.appplatform.entity.ApkInfo;
+import com.app.appplatform.dto.AppInfoDto;
 import com.app.appplatform.entity.AppInfo;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 public interface AppInfoService {
     
@@ -30,7 +29,7 @@ public interface AppInfoService {
      * @param isBeta 是否测试版
      * @return 分页应用列表
      */
-    PageResult<AppInfo> getAllApps(
+    PageResult<AppInfoDto> getAllApps(
             int pageNum, 
             int pageSize, 
             String appName, 
@@ -44,7 +43,7 @@ public interface AppInfoService {
      * @deprecated 使用 {@link #getAllApps(int, int, String, String, String, Boolean)} 替代
      */
     @Deprecated
-    default PageResult<AppInfo> getAllApps(int pageNum, int pageSize) {
+    default PageResult<AppInfoDto> getAllApps(int pageNum, int pageSize) {
         return getAllApps(pageNum, pageSize, null, null, null, null);
     }
 

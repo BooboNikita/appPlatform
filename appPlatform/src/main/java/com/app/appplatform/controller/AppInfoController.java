@@ -2,6 +2,7 @@ package com.app.appplatform.controller;
 
 import com.app.appplatform.common.PageResult;
 import com.app.appplatform.common.Result;
+import com.app.appplatform.dto.AppInfoDto;
 import com.app.appplatform.entity.AppInfo;
 import com.app.appplatform.service.AppInfoService;
 import jakarta.annotation.security.PermitAll;
@@ -73,7 +74,7 @@ public class AppInfoController {
      */
     @PermitAll
     @GetMapping("/apps")
-    public Result<PageResult<AppInfo>> getAllApps(
+    public Result<PageResult<AppInfoDto>> getAllApps(
             @RequestParam(defaultValue = "1") int pageNum,
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(required = false) String appName,
@@ -85,7 +86,7 @@ public class AppInfoController {
         pageNum = Math.max(1, pageNum);
         pageSize = Math.min(100, Math.max(1, pageSize)); // 限制每页最多100条
 
-        PageResult<AppInfo> pageResult = appInfoService.getAllApps(
+        PageResult<AppInfoDto> pageResult = appInfoService.getAllApps(
             pageNum, 
             pageSize, 
             appName, 
