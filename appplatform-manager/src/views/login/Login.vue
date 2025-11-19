@@ -79,6 +79,52 @@
           >
             登 录
           </el-button>
+          <div class="register-container">
+            <el-button type="text" @click="showRegisterForm = true"
+              >注册</el-button
+            >
+          </div>
+          <el-dialog
+            v-model="showRegisterForm"
+            title="用户注册"
+            width="30%"
+            :before-close="handleCloseRegisterForm"
+          >
+            <el-form
+              :model="registerForm"
+              :rules="registerRules"
+              ref="registerFormRef"
+            >
+              <el-form-item label="用户名" prop="username">
+                <el-input
+                  v-model="registerForm.username"
+                  autocomplete="off"
+                ></el-input>
+              </el-form-item>
+              <el-form-item label="密码" prop="password">
+                <el-input
+                  type="password"
+                  v-model="registerForm.password"
+                  autocomplete="off"
+                ></el-input>
+              </el-form-item>
+              <el-form-item label="确认密码" prop="password">
+                <el-input
+                  type="password"
+                  v-model="registerForm.confirmPassword"
+                  autocomplete="off"
+                ></el-input>
+              </el-form-item>
+            </el-form>
+            <template #footer>
+              <span class="dialog-footer">
+                <el-button @click="handleCloseRegisterForm">取消</el-button>
+                <el-button type="primary" @click="handleRegister"
+                  >注册</el-button
+                >
+              </span>
+            </template>
+          </el-dialog>
         </el-form>
       </div>
     </div>
@@ -91,6 +137,7 @@ import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { User, Lock, Key } from "@element-plus/icons-vue";
 import { useUserStore } from "@/stores/user";
+import { tr } from "element-plus/es/locale";
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -108,7 +155,19 @@ const loginRules = {
   code: [{ required: true, message: "请输入验证码", trigger: "blur" }],
 };
 
+const registerForm = reactive({
+  username: "",
+  password: "",
+  confirmPassword: "",
+});
+
+const registerRules = {
+  username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
+  password: [{ required: true, message: "请输入密码", trigger: "blur" }],
+};
+
 const loading = ref(false);
+const showRegisterForm = ref(false);
 const captchaUrl = ref("");
 const loginFormRef = ref();
 
@@ -136,6 +195,29 @@ const handleLogin = async () => {
     refreshCaptcha();
   } finally {
     loading.value = false;
+  }
+};
+
+const handleCloseRegisterForm = () => {
+  showRegisterForm.value = false;
+};
+
+const handleRegister = async () => {
+  try {
+    if (registerForm.password !== registerForm.confirmPassword) {
+      ElMessage.error("两次输入的密码不一致");
+      return;
+    }
+    // 调用注册接口
+    const res = await userStore.register(registerForm);
+    if (res == true) {
+      ElMessage.success("注册成功，请登录");
+      showRegisterForm.value = false;
+    } else {
+      ElMessage.error("注册失败");
+    }
+  } catch (error) {
+    console.error("Register error:", error);
   }
 };
 

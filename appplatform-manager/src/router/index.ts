@@ -1,11 +1,12 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
 import Layout from "@/views/layout/Index.vue";
+import { hi } from "element-plus/es/locale";
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/login",
     name: "Login",
-    component: () => import("@/views/Login.vue"),
+    component: () => import("@/views/login/Login.vue"),
     meta: { title: "登录" },
   },
   {
@@ -29,7 +30,7 @@ const routes: Array<RouteRecordRaw> = [
         path: "/app/upload",
         name: "AppUpload",
         component: () => import("@/views/app/Upload.vue"),
-        meta: { title: "上传应用", icon: "Upload" },
+        meta: { title: "上传应用", icon: "Upload", hiddenInMenu: true },
       },
       {
         path: "/logs",
@@ -42,6 +43,24 @@ const routes: Array<RouteRecordRaw> = [
         name: "LogDetail",
         component: () => import("@/views/logs/Detail.vue"),
         meta: { title: "日志详情", icon: "Document", hiddenInMenu: true },
+      },
+      {
+        path: "/modules",
+        name: "Modules",
+        component: () => import("@/views/modules/List.vue"),
+        meta: { title: "模块管理", icon: "Menu" },
+      },
+      {
+        path: "/modules/edit",
+        name: "ModuleEdit",
+        component: () => import("@/views/modules/Edit.vue"),
+        meta: { title: "编辑模块", icon: "Edit", hiddenInMenu: true },
+      },
+      {
+        path: "/app/loginCode",
+        name: "loginCode",
+        component: () => import("@/views/app/LoginCode.vue"),
+        meta: { title: "二维码登录", icon: "FullScreen" },
       },
     ],
   },

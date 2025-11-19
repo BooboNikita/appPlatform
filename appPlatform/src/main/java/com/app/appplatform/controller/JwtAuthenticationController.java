@@ -4,8 +4,10 @@ import com.app.appplatform.common.Result;
 import com.app.appplatform.model.JwtRequest;
 import com.app.appplatform.dto.UserInfoDto;
 import com.app.appplatform.model.JwtResponse;
+import com.app.appplatform.model.RegisterRequest;
 import com.app.appplatform.service.JwtAuthenticationService;
 import jakarta.annotation.security.PermitAll;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -35,5 +37,17 @@ public class JwtAuthenticationController {
         String username = ((UserDetails) authentication.getPrincipal()).getUsername();
         UserInfoDto userInfo = authenticationService.getUserInfo(username);
         return Result.success(userInfo);
+    }
+    
+    /**
+     * 用户注册接口
+     * @param registerRequest 注册请求参数
+     * @return 注册成功的用户信息
+     */
+    @PostMapping("/register")
+    @PermitAll()
+    public Result<UserInfoDto> registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
+        UserInfoDto newUser = authenticationService.registerUser(registerRequest);
+        return Result.success(newUser);
     }
 }

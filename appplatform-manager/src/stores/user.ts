@@ -1,7 +1,12 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { login as loginApi, logout as logoutApi, getInfo } from "@/api/user";
+import {
+  login as loginApi,
+  logout as logoutApi,
+  getInfo,
+  register as registerApi,
+} from "@/api/user";
 import type { LoginForm } from "@/types/user";
 
 export const useUserStore = defineStore("user", () => {
@@ -17,6 +22,18 @@ export const useUserStore = defineStore("user", () => {
       localStorage.setItem("token", data.token);
       await getUserInfo();
       router.push("/");
+      return true;
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  };
+
+  const register = async (registerForm: LoginForm) => {
+    try {
+      const { data } = await registerApi({
+        username: registerForm.username,
+        password: registerForm.password,
+      });
       return true;
     } catch (error) {
       return Promise.reject(error);
@@ -59,5 +76,6 @@ export const useUserStore = defineStore("user", () => {
     logout,
     getUserInfo,
     resetToken,
+    register,
   };
 });

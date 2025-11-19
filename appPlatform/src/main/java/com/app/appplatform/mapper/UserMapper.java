@@ -1,10 +1,7 @@
 package com.app.appplatform.mapper;
 
 import com.app.appplatform.entity.User;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Result;
-import org.apache.ibatis.annotations.Results;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
 
 @Mapper
 public interface UserMapper {
@@ -17,4 +14,7 @@ public interface UserMapper {
             @Result(property = "avatar", column = "avatar")
     })
     User findByUsername(String username);
+
+    @Insert("INSERT INTO user (username, password, role, avatar) VALUES (#{username}, #{password}, #{role}, #{avatar})")
+    void insertUser(User user);
 }

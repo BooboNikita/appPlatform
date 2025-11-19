@@ -7,8 +7,12 @@ import com.app.appplatform.service.LogService;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collections;
 
 import java.util.List;
 
@@ -38,6 +42,18 @@ public class LogServiceImpl implements LogService {
 
     @Override
     public PageResult<LogInfo> getLogList(int pageNum, int pageSize, String appName, String username, String startDate, String endDate) {
+        // 获取当前登录用户
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
+        // 获取用户角色
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("ROLE_ADMIN"));
+                
+        // 如果不是管理员，返回空结果
+        if (!isAdmin) {
+            return new PageResult<>(Collections.emptyList(), 0, pageNum, pageSize, 0);
+        }
+        
         // 处理日期格式，确保是 YYYY-MM-DD 格式
         if (startDate != null && startDate.length() > 10) {
             startDate = startDate.substring(0, 10);

@@ -5,6 +5,7 @@ import com.app.appplatform.entity.User;
 import com.app.appplatform.mapper.UserMapper;
 import com.app.appplatform.model.JwtRequest;
 import com.app.appplatform.model.JwtResponse;
+import com.app.appplatform.model.RegisterRequest;
 import com.app.appplatform.service.JwtAuthenticationService;
 import com.app.appplatform.service.JwtUserDetailsService;
 import com.app.appplatform.util.JwtTokenUtil;
@@ -14,6 +15,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,11 +69,25 @@ public class JwtAuthenticationServiceImpl implements JwtAuthenticationService {
         if (user == null) {
             throw new UsernameNotFoundException("User not found with username: " + username);
         }
-        
+
         return new UserInfoDto(
             user.getUsername(),
             user.getAvatar(),
             user.getRole()
         );
+    }
+
+    @Override
+    public UserInfoDto registerUser(RegisterRequest registerRequest) {
+        User user = new User();
+        user.setUsername(registerRequest.getUsername());
+
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        user.setPassword(encoder.encode(registerRequest.getPassword()));
+
+        user.setRole("USER");
+        user.setAvatar(registerRequest.getAvatar());
+        userMapper.insertUser(user);
+        return getUserInfo(registerRequest.getUsername());
     }
 }

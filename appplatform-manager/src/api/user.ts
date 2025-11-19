@@ -23,3 +23,7 @@ export const logout = () => {
 export const getInfo = () => {
   return request.get<UserInfo>("/auth/userinfo");
 };
+
+export const register = (data: LoginForm) => {
+  return request.post("/auth/register", data);
+};

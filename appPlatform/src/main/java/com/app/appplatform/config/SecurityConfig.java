@@ -63,18 +63,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // 开发环境配置
-        if (environment.acceptsProfiles(Profiles.of("dev"))) {
-            configuration.setAllowedOrigins(Arrays.asList(
-                    "http://localhost:5174",
-                    "http://172.21.228.2:5174"
-            ));
-        }
-        // 生产环境配置
-        else if (environment.acceptsProfiles(Profiles.of("prod"))) {
-            configuration.setAllowedOrigins(Collections.singletonList("https://your-production-domain.com"));
-        }
-
+        configuration.setAllowedOriginPatterns(Collections.singletonList("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Collections.singletonList("*"));
         configuration.setAllowCredentials(true);
