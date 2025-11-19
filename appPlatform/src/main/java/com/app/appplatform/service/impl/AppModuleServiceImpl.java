@@ -6,10 +6,14 @@ import com.app.appplatform.mapper.AppModuleMapper;
 import com.app.appplatform.service.AppModuleService;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,8 +27,32 @@ public class AppModuleServiceImpl implements AppModuleService {
 
     @Override
     @Cacheable(value = "appModules", key = "'active'")
-    public List<AppModuleDto> getActiveModules(String username) {
-        List<AppModule> moduleList = username.equals("apptest") ? appModuleMapper.findAllActiveAndHideForTest() : appModuleMapper.findAllActive();
+    public List<AppModuleDto> getActiveModules(String username, HttpHeaders headers) {
+        boolean hideForTest = username.equals("apptest");
+
+        String deviceInfo = headers.getFirst("deviceInfo");
+        String deviceBrand = null;
+        if (deviceInfo != null) {
+            try {
+                String fixedJson = deviceInfo
+                        .replaceAll("(\\w+):", "\"$1\":")
+                        .replaceAll(": (\\w+)", ": \"$1\"");
+
+                ObjectMapper objectMapper = new ObjectMapper();
+                Map<String, Object> deviceInfoMap = objectMapper.readValue(fixedJson, new TypeReference<Map<String, Object>>() {});
+                deviceBrand = (String) deviceInfoMap.get("brand");
+            } catch (Exception e) {
+                // 解析失败，可以记录日志
+                System.err.println("Failed to parse deviceInfo: " + e.getMessage());
+            }
+        }
+
+        if (deviceBrand != null && deviceBrand.equalsIgnoreCase("huawei")) {
+            hideForTest = false;
+        }
+
+        List<AppModule> moduleList = hideForTest ? appModuleMapper.findAllActiveAndHideForTest() : appModuleMapper.findAllActive();
+
         return moduleList.stream()
                 .map(this::convertToAppInfoDto)
                 .collect(Collectors.toList());

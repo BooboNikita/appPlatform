@@ -27,3 +27,6 @@ ALTER TABLE app_module
 
 ALTER TABLE app_module
     ADD COLUMN hideForTest boolean DEFAULT false COMMENT '是否对测试账号隐藏';
+
+ALTER TABLE app_module
+    MODIFY COLUMN  id bigint NOT NULL AUTO_INCREMENT;

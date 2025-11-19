@@ -6,6 +6,7 @@ import com.app.appplatform.entity.AppModule;
 import com.app.appplatform.service.AppModuleService;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,8 +21,8 @@ public class AppModuleController {
 
     @PermitAll
     @GetMapping("/allActive")
-    public Result<List<AppModuleDto>> listActiveModules(@RequestParam String userName) {
-        return Result.success(appModuleService.getActiveModules(userName));
+    public Result<List<AppModuleDto>> listActiveModules(@RequestParam String userName, @RequestHeader HttpHeaders headers) {
+        return Result.success(appModuleService.getActiveModules(userName, headers));
     }
 
     @GetMapping("/all")
