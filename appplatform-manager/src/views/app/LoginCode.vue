@@ -38,12 +38,19 @@
       </div>
 
       <div class="form-qrcode-qrcode">
-        <el-image
-          v-if="qrcodeBase64.dataUrl"
-          :src="qrcodeBase64.dataUrl"
-          fit="contain"
-          class="qrcode-img"
-        />
+        <div class="qrcode-img-container" v-if="qrcodeBase64.dataUrl">
+          <el-image
+            :src="qrcodeBase64.dataUrl"
+            fit="contain"
+            class="qrcode-img"
+          />
+          <img
+            src="@/assets/logo.png"
+            fit="contain"
+            class="qrcode-center-img"
+          />
+        </div>
+
         <div v-else class="qrcode-placeholder">
           <el-icon size="48" color="#dcdfe6"><Picture /></el-icon>
           <span>二维码预览</span>
@@ -61,8 +68,8 @@ import { Picture } from "@element-plus/icons-vue";
 
 const formRef = ref();
 const form = reactive({
-  username: "15626204428",
-  password: "Xxg2024#@!",
+  username: "",
+  password: "",
 });
 
 const qrcodeBase64 = reactive({
@@ -89,6 +96,10 @@ const generateQrcode = async (data: { username: string; password: string }) => {
   return await QRCode.toDataURL(JSON.stringify(data), {
     margin: 1,
     width: 200,
+    color: {
+      dark: "#111111",
+      light: "#ffffff",
+    },
   });
 };
 </script>
@@ -123,10 +134,25 @@ const generateQrcode = async (data: { username: string; password: string }) => {
   justify-content: center;
 }
 
+.qrcode-img-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .qrcode-img {
   width: 100%;
   height: 100%;
   border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.qrcode-center-img {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  background-color: #ffffff;
+  border-radius: 4px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
