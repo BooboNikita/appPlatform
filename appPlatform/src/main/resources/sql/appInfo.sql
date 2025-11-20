@@ -22,3 +22,13 @@ create table app_info
 ALTER TABLE app_info
     MODIFY COLUMN id INT AUTO_INCREMENT,
     ADD PRIMARY KEY (id);
+
+-- 处理反斜杠路径 (Windows) - 使用四个反斜杠
+UPDATE app_info
+SET path = SUBSTRING_INDEX(path, '\\\\', -1)
+WHERE path LIKE '%\\\\%';
+
+-- 处理正斜杠路径 (Linux/Unix)
+UPDATE app_info
+SET path = SUBSTRING_INDEX(path, '/', -1)
+WHERE path LIKE '%/%';

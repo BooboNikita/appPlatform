@@ -5,6 +5,7 @@ import com.app.appplatform.dto.AppInfoDto;
 import com.app.appplatform.entity.AppInfo;
 import com.app.appplatform.mapper.AppInfoMapper;
 import com.app.appplatform.service.AppInfoService;
+import com.app.appplatform.service.MinioService;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,11 +25,17 @@ public class AppInfoServiceImpl implements AppInfoService {
 
     private final AppInfoMapper appInfoMapper;
 
+    private final MinioService minioService;
+
     @Value("${app.upload.dir}/app")
     private String uploadDir;
 
-    public AppInfoServiceImpl(AppInfoMapper appInfoMapper) {
+    @Value("${minio.bucket.apps}")
+    private String appsBucketName;
+
+    public AppInfoServiceImpl(AppInfoMapper appInfoMapper, MinioService minioService) {
         this.appInfoMapper = appInfoMapper;
+        this.minioService = minioService;
     }
 
     /**
@@ -76,26 +83,30 @@ public class AppInfoServiceImpl implements AppInfoService {
         }
         String newFilename = UUID.randomUUID().toString() + fileExtension;
 
-        // 创建上传目录（如果不存在）
-        File uploadDirFile = new File(uploadDir);
-        if (!uploadDirFile.exists()) {
-            if (!uploadDirFile.mkdirs()) {
-                throw new IOException("无法创建上传目录: " + uploadDir);
-            }
+//        // 创建上传目录（如果不存在）
+//        File uploadDirFile = new File(uploadDir);
+//        if (!uploadDirFile.exists()) {
+//            if (!uploadDirFile.mkdirs()) {
+//                throw new IOException("无法创建上传目录: " + uploadDir);
+//            }
+//        }
+//
+//        // 保存文件
+//        Path filePath = Paths.get(uploadDir, newFilename);
+//        file.transferTo(filePath.toFile());
+        try {
+            String filePath = minioService.uploadFile(file, newFilename, appsBucketName);
+            // 设置应用信息
+            appInfo.setPath(filePath);
+            appInfo.setSize(fileSizeStr);
+            appInfo.setDownloadTimes(0);
+
+            // 保存到数据库
+            appInfoMapper.insert(appInfo);
+            return appInfo;
+        } catch (Exception e) {
+            throw new RuntimeException("文件上传失败: " + e.getMessage());
         }
-
-        // 保存文件
-        Path filePath = Paths.get(uploadDir, newFilename);
-        file.transferTo(filePath.toFile());
-
-        // 设置应用信息
-        appInfo.setPath(filePath.toString());
-        appInfo.setSize(fileSizeStr);
-        appInfo.setDownloadTimes(0);
-
-        // 保存到数据库
-        appInfoMapper.insert(appInfo);
-        return appInfo;
     }
 
     @Override

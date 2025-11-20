@@ -5,20 +5,16 @@ import com.app.appplatform.common.Result;
 import com.app.appplatform.dto.AppInfoDto;
 import com.app.appplatform.entity.AppInfo;
 import com.app.appplatform.service.AppInfoService;
+import com.app.appplatform.util.FileDownloadUtil;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 @RestController
@@ -27,9 +23,15 @@ public class AppInfoController {
 
     private final AppInfoService appInfoService;
 
+    private final FileDownloadUtil fileDownloadUtil;
+
+    @Value("${minio.bucket.apps}")
+    private String appsBucketName;
+
     @Autowired
-    public AppInfoController(AppInfoService appInfoService) {
+    public AppInfoController(AppInfoService appInfoService, FileDownloadUtil fileDownloadUtil) {
         this.appInfoService = appInfoService;
+        this.fileDownloadUtil = fileDownloadUtil;
     }
 
     /**
@@ -133,46 +135,11 @@ public class AppInfoController {
         // 增加下载次数
         appInfoService.incrementDownloadCount(id);
 
-        Path filePath = Paths.get(appInfo.getPath());
-        File file = filePath.toFile();
-        long fileLength = file.length();
-
-        // 设置响应头
-        String filename = appInfo.getAppName() + "_" + appInfo.getVersion() + ".apk";
-        String encodedFilename = URLEncoder.encode(filename, StandardCharsets.UTF_8.toString())
-                .replaceAll("\\+", "%20");
-
-        String contentDisposition = String.format(
-                "attachment; filename=\"%s\"; filename*=UTF-8''%s",
-                filename.replace("\"", "\\\""),
-                encodedFilename
-        );
-
-        // 创建流式响应体
-        StreamingResponseBody responseBody = outputStream -> {
-            try (FileInputStream fis = new FileInputStream(file)) {
-                byte[] buffer = new byte[8192];
-                int bytesRead;
-                long totalBytesRead = 0;
-
-                while ((bytesRead = fis.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, bytesRead);
-                    totalBytesRead += bytesRead;
-                    // 可以在这里记录下载进度
-                    // 实际项目中可以通过WebSocket或事件总线将进度推送到前端
-                    int progress = (int) ((totalBytesRead * 100) / fileLength);
-                    System.out.println("下载进度: " + progress + "%");
-                }
-                outputStream.flush();
-            }
-        };
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
-                .contentLength(fileLength)
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(responseBody);
-
+        try {
+            return fileDownloadUtil.downloadFile(appInfo.getPath(), appsBucketName);
+        } catch (Exception e) {
+            throw new RuntimeException("文件下载失败: " + e.getMessage(), e);
+        }
     }
 
     /**
