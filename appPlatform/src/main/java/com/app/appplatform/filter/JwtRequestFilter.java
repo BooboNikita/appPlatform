@@ -27,18 +27,20 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
 
-    private static final List<String> PUBLIC_ENDPOINTS = Arrays.asList(
-            "/api/auth/login",
-            "/v3/api-docs",
-            "/swagger-ui/",
-            "/swagger-ui.html",
-            "/webjars/",
-            "/swagger-resources",
-            "/api/public/"  // 添加不需要 JWT 验证的公共接口路径
+    private static final List<Pattern> PUBLIC_PATTERNS = Arrays.asList(
+            Pattern.compile("^/api/auth/.*"),
+            Pattern.compile("^/v2/api-docs$"),
+            Pattern.compile("^/swagger-resources/.*"),
+            Pattern.compile("^/swagger-ui/.*"),
+            Pattern.compile("^/webjars/.*"),
+            Pattern.compile("^/favicon\\.ico$"),
+            Pattern.compile("^/actuator/.*"),
+            Pattern.compile("^/.well-known/.*")
     );
 
     @Autowired
@@ -56,8 +58,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             HandlerExecutionChain handler = requestMappingHandlerMapping.getHandler(request);
 
             // 检查是否是需要放行的请求
-            if (handler != null && handler.getHandler() instanceof HandlerMethod) {
-                HandlerMethod handlerMethod = (HandlerMethod) handler.getHandler();
+            if (handler != null && handler.getHandler() instanceof HandlerMethod handlerMethod) {
 
                 // 检查方法上是否有 @PermitAll 或 @PreAuthorize("permitAll()") 注解
                 boolean isPermitAll = handlerMethod.hasMethodAnnotation(PermitAll.class) ||
@@ -70,7 +71,9 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             }
 
             String requestURI = request.getRequestURI();
-            return PUBLIC_ENDPOINTS.stream().anyMatch(requestURI::startsWith);
+            logger.debug("检查公共端点: " + requestURI);
+            return PUBLIC_PATTERNS.stream()
+                    .anyMatch(pattern -> pattern.matcher(requestURI).matches());
         } catch (Exception e) {
             // 记录错误日志
             logger.error("检查公共端点时出错: " + e.getMessage(), e);

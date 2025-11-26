@@ -4,6 +4,7 @@ import com.app.appplatform.common.PageResult;
 import com.app.appplatform.common.Result;
 import com.app.appplatform.dto.AppInfoDto;
 import com.app.appplatform.entity.AppInfo;
+import com.app.appplatform.enums.BucketType;
 import com.app.appplatform.service.AppInfoService;
 import com.app.appplatform.util.FileDownloadUtil;
 import jakarta.annotation.security.PermitAll;
@@ -24,9 +25,6 @@ public class AppInfoController {
     private final AppInfoService appInfoService;
 
     private final FileDownloadUtil fileDownloadUtil;
-
-    @Value("${minio.bucket.apps}")
-    private String appsBucketName;
 
     @Autowired
     public AppInfoController(AppInfoService appInfoService, FileDownloadUtil fileDownloadUtil) {
@@ -136,7 +134,7 @@ public class AppInfoController {
         appInfoService.incrementDownloadCount(id);
 
         try {
-            return fileDownloadUtil.downloadFile(appInfo.getPath(), appsBucketName);
+            return fileDownloadUtil.downloadFile(appInfo.getPath(), BucketType.APPS);
         } catch (Exception e) {
             throw new RuntimeException("文件下载失败: " + e.getMessage(), e);
         }

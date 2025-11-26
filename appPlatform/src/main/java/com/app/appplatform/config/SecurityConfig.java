@@ -3,14 +3,13 @@ package com.app.appplatform.config;
 import com.app.appplatform.filter.JwtRequestFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.springframework.core.env.Environment;
-import org.springframework.core.env.Profiles;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -35,9 +34,6 @@ public class SecurityConfig {
     @Autowired
     private JwtRequestFilter jwtRequestFilter;
 
-    @Autowired
-    private Environment environment;
-
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -56,8 +52,20 @@ public class SecurityConfig {
             "/swagger-ui.html",
             "/webjars/**",
             "/swagger-resources/**",
-            "/favicon.ico"
+            "/favicon.ico",
+            "/actuator/**"
     };
+
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring().requestMatchers(
+                "/favicon.ico",
+                "/static/**",
+                "/css/**",
+                "/js/**",
+                "/images/**"
+        );
+    }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -84,6 +92,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 白名单放行
                         .requestMatchers(WHITE_LIST).permitAll()
+                        .requestMatchers("/actuator/health").permitAll()
+                        .requestMatchers("/actuator/**").hasRole("ADMIN")
                         // 其他所有请求都需要认证
                         .anyRequest().authenticated()
                 )

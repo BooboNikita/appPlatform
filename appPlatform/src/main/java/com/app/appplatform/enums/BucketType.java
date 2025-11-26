@@ -2,8 +2,7 @@ package com.app.appplatform.enums;
 
 public enum BucketType {
     DEFAULT("configfile"),
-    IMAGES("images"),
-    DOCUMENTS("documents"),
+    LOGS("applogs"),
     APPS("apps");
 
     private final String bucketName;

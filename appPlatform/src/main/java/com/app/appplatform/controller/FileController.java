@@ -1,6 +1,7 @@
 package com.app.appplatform.controller;
 
 import com.app.appplatform.common.Result;
+import com.app.appplatform.enums.BucketType;
 import com.app.appplatform.service.MinioService;
 import com.app.appplatform.util.FileDownloadUtil;
 import jakarta.annotation.security.PermitAll;
@@ -17,52 +18,49 @@ import java.util.UUID;
 @RequestMapping("/api-files")
 public class FileController {
 
-    @Autowired
-    private MinioService minioService;
+    private final MinioService minioService;
+    private final FileDownloadUtil fileDownloadUtil;
 
     @Autowired
-    private FileDownloadUtil fileDownloadUtil;
-
-    @Value("${minio.bucket.logs}")
-    private String logsBucketName;
-
-    @Value("${minio.bucket.apps}")
-    private String appsBucketName;
+    public FileController(MinioService minioService, FileDownloadUtil fileDownloadUtil) {
+        this.minioService = minioService;
+        this.fileDownloadUtil = fileDownloadUtil;
+    }
 
     @PostMapping("/upload/logs")
     public Result<String> uploadImage(@RequestParam("file") MultipartFile file) {
-        return uploadFile(file, logsBucketName);
+        return uploadFile(file, BucketType.LOGS);
     }
 
     @PermitAll
     @PostMapping("/upload/apps")
     public Result<String> uploadApp(@RequestParam("file") MultipartFile file) {
-        return uploadFile(file, appsBucketName);
+        return uploadFile(file, BucketType.APPS);
     }
 
     @PermitAll
     @GetMapping("/download/logs/{objectName}")
     public ResponseEntity<StreamingResponseBody> downloadLog(@PathVariable String objectName) {
-        return downloadFile(objectName, logsBucketName);
+        return downloadFile(objectName, BucketType.LOGS);
     }
 
     @PermitAll
     @GetMapping("/download/apps/{objectName}")
     public ResponseEntity<StreamingResponseBody> downloadApp(@PathVariable String objectName) {
-        return downloadFile(objectName, appsBucketName);
+        return downloadFile(objectName, BucketType.APPS);
     }
 
     @DeleteMapping("/delete/logs/{objectName}")
     public void deleteLog(@PathVariable String objectName) {
-        deleteFile(objectName, logsBucketName);
+        deleteFile(objectName, BucketType.LOGS);
     }
 
     @DeleteMapping("/delete/apps/{objectName}")
     public void deleteApp(@PathVariable String objectName) {
-        deleteFile(objectName, appsBucketName);
+        deleteFile(objectName, BucketType.APPS);
     }
 
-    private Result<String> uploadFile(MultipartFile file, String bucketName) {
+    private Result<String> uploadFile(MultipartFile file, BucketType bucketType) {
         try {
             if (file == null || file.isEmpty()) {
                 throw new RuntimeException("上传文件不能为空");
@@ -83,24 +81,24 @@ public class FileController {
 
             String objectName = UUID.randomUUID().toString() + fileExtension;
 
-            minioService.uploadFile(file, objectName, bucketName);
-            return Result.success(minioService.getFileUrl(objectName, bucketName));
+            minioService.uploadFile(file, objectName, bucketType);
+            return Result.success(minioService.getFileUrl(objectName, bucketType));
         } catch (Exception e) {
             throw new RuntimeException("文件上传失败: " + e.getMessage());
         }
     }
 
-    private ResponseEntity<StreamingResponseBody> downloadFile(String objectName, String bucketName) {
+    private ResponseEntity<StreamingResponseBody> downloadFile(String objectName, BucketType bucketType) {
         try {
-            return fileDownloadUtil.downloadFile(objectName, bucketName);
+            return fileDownloadUtil.downloadFile(objectName, bucketType);
         } catch (Exception e) {
             throw new RuntimeException("文件下载失败: " + e.getMessage());
         }
     }
 
-    private void deleteFile(String objectName, String bucketName) {
+    private void deleteFile(String objectName, BucketType bucketType) {
         try {
-            minioService.deleteFile(objectName, bucketName);
+            minioService.deleteFile(objectName, bucketType);
         } catch (Exception e) {
             throw new RuntimeException("文件删除失败: " + e.getMessage());
         }

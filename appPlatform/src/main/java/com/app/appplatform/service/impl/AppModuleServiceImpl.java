@@ -4,6 +4,9 @@ import com.app.appplatform.dto.AppModuleDto;
 import com.app.appplatform.entity.AppModule;
 import com.app.appplatform.mapper.AppModuleMapper;
 import com.app.appplatform.service.AppModuleService;
+import com.app.appplatform.util.JsonUtil;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpHeaders;
@@ -13,11 +16,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.stream.Collectors;
 
 @Service
 public class AppModuleServiceImpl implements AppModuleService {
+
+    private static final Log logger = LogFactory.getLog(AppModuleServiceImpl.class);
 
     private final AppModuleMapper appModuleMapper;
 
@@ -26,26 +30,28 @@ public class AppModuleServiceImpl implements AppModuleService {
     }
 
     @Override
-    @Cacheable(value = "appModules", key = "'active'")
+    @Cacheable(value = "appModules",
+            key = "'active:' + #username + ':' + T(java.util.Objects).hashCode(#headers.getFirst('deviceInfo'))")
     public List<AppModuleDto> getActiveModules(String username, HttpHeaders headers) {
-        boolean hideForTest = username.equals("apptest");
+        logger.info("getActiveModules " + username + " " + headers);
+
+        boolean hideForTest = username.equals("apptest") || username.isEmpty();
 
         String deviceInfo = headers.getFirst("deviceInfo");
         String deviceBrand = null;
         if (deviceInfo != null) {
             try {
-                String fixedJson = deviceInfo
-                        .replaceAll("(\\w+):", "\"$1\":")
-                        .replaceAll(": (\\w+)", ": \"$1\"");
-
-                ObjectMapper objectMapper = new ObjectMapper();
-                Map<String, Object> deviceInfoMap = objectMapper.readValue(fixedJson, new TypeReference<Map<String, Object>>() {});
-                deviceBrand = (String) deviceInfoMap.get("brand");
+                Map<String, Object> map = JsonUtil.toObject(deviceInfo, new TypeReference<Map<String, Object>>() {});
+                if (map != null) {
+                    deviceBrand = (String) map.get("brand");
+                }
             } catch (Exception e) {
                 // 解析失败，可以记录日志
                 System.err.println("Failed to parse deviceInfo: " + e.getMessage());
             }
         }
+
+        logger.info("getActiveModules brand:" + deviceBrand + "hideForTest:" + hideForTest);
 
         if (deviceBrand != null && deviceBrand.equalsIgnoreCase("huawei")) {
             hideForTest = false;

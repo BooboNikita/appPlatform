@@ -3,6 +3,7 @@ package com.app.appplatform.controller;
 import com.app.appplatform.common.PageResult;
 import com.app.appplatform.common.Result;
 import com.app.appplatform.entity.LogInfo;
+import com.app.appplatform.enums.BucketType;
 import com.app.appplatform.service.LogService;
 import com.app.appplatform.service.MinioService;
 import jakarta.annotation.security.PermitAll;
@@ -23,9 +24,6 @@ import java.util.Date;
 @RestController
 @RequestMapping("/api-logs")
 public class LogController {
-
-    @Value("${minio.bucket.logs}")
-    private String bucketLogs;
 
     private final LogService logService;
 
@@ -70,7 +68,7 @@ public class LogController {
             try {
                 String originalFilename = file.getOriginalFilename();
                 String newFilename = username + "_" + appName + "_" + originalFilename;
-                String filePath = minioService.uploadFile(file, newFilename, bucketLogs);
+                String filePath = minioService.uploadFile(file, newFilename, BucketType.LOGS);
                 if (!filePaths.isEmpty()) {
                     filePaths.append(",");
                 }
@@ -136,7 +134,7 @@ public class LogController {
     @PostMapping(value = "/file", produces = MediaType.APPLICATION_JSON_VALUE)
     public Result<String> readLogFile(@RequestParam String filePath) throws IOException {
         try {
-            try (InputStream inputStream = minioService.downloadFile(filePath, bucketLogs)) {
+            try (InputStream inputStream = minioService.downloadFile(filePath, BucketType.LOGS)) {
                 if (inputStream == null) {
                     return Result.error(500, "文件不存在");
                 }

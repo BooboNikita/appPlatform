@@ -1,5 +1,6 @@
 package com.app.appplatform.util;
 
+import com.app.appplatform.enums.BucketType;
 import com.app.appplatform.service.MinioService;
 import io.minio.StatObjectResponse;
 import org.springframework.http.HttpHeaders;
@@ -11,13 +12,13 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 @Component
 public record FileDownloadUtil(MinioService minioService) {
 
-    public ResponseEntity<StreamingResponseBody> downloadFile(String objectName, String bucketName) throws Exception {
-        return downloadFile(objectName, objectName, bucketName);
+    public ResponseEntity<StreamingResponseBody> downloadFile(String objectName, BucketType bucketType) throws Exception {
+        return downloadFile(objectName, objectName, bucketType);
     }
 
-    public ResponseEntity<StreamingResponseBody> downloadFile(String objectName, String downloadFilename, String bucketName) throws Exception {
+    public ResponseEntity<StreamingResponseBody> downloadFile(String objectName, String downloadFilename, BucketType bucketType) throws Exception {
         // 获取文件信息
-        StatObjectResponse stat = minioService.getFileStat(objectName, bucketName);
+        StatObjectResponse stat = minioService.getFileStat(objectName, bucketType);
 
         // 设置响应头
         HttpHeaders headers = new HttpHeaders();
@@ -26,7 +27,7 @@ public record FileDownloadUtil(MinioService minioService) {
         headers.setContentDispositionFormData("attachment", downloadFilename);
 
         // 获取流式响应体
-        StreamingResponseBody responseBody = minioService.downloadFileAsStream(objectName, bucketName);
+        StreamingResponseBody responseBody = minioService.downloadFileAsStream(objectName, bucketType);
 
         return ResponseEntity.ok()
                 .headers(headers)

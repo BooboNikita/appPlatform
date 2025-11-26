@@ -1,5 +1,6 @@
 package com.app.appplatform.service.impl;
 
+import com.app.appplatform.enums.BucketType;
 import com.app.appplatform.service.MinioService;
 import io.minio.*;
 import io.minio.http.Method;
@@ -26,7 +27,8 @@ public class MinioServiceImpl implements MinioService {
     }
 
     @Override
-    public String uploadFile(MultipartFile file, String objectName, String bucketName) throws Exception {
+    public String uploadFile(MultipartFile file, String objectName, BucketType bucketType) throws Exception {
+        String bucketName = bucketType.getBucketName();
         ensureBucketExists(bucketName);
 
         try (InputStream inputStream = file.getInputStream()) {
@@ -43,7 +45,8 @@ public class MinioServiceImpl implements MinioService {
     }
 
     @Override
-    public String getFileUrl(String objectName, String bucketName) throws Exception {
+    public String getFileUrl(String objectName, BucketType bucketType) throws Exception {
+        String bucketName = bucketType.getBucketName();
         return minioClient.getPresignedObjectUrl(
                 GetPresignedObjectUrlArgs.builder()
                         .method(Method.GET)
@@ -55,7 +58,8 @@ public class MinioServiceImpl implements MinioService {
     }
 
     @Override
-    public InputStream downloadFile(String objectName, String bucketName) throws Exception {
+    public InputStream downloadFile(String objectName, BucketType bucketType) throws Exception {
+        String bucketName = bucketType.getBucketName();
         return minioClient.getObject(
                 GetObjectArgs.builder()
                         .bucket(bucketName)
@@ -65,7 +69,8 @@ public class MinioServiceImpl implements MinioService {
     }
 
     @Override
-    public void deleteFile(String objectName, String bucketName) throws Exception {
+    public void deleteFile(String objectName, BucketType bucketType) throws Exception {
+        String bucketName = bucketType.getBucketName();
         minioClient.removeObject(
                 RemoveObjectArgs.builder()
                         .bucket(bucketName)
@@ -75,7 +80,8 @@ public class MinioServiceImpl implements MinioService {
     }
 
     @Override
-    public StreamingResponseBody downloadFileAsStream(String objectName, String bucketName) throws Exception {
+    public StreamingResponseBody downloadFileAsStream(String objectName, BucketType bucketType) throws Exception {
+        String bucketName = bucketType.getBucketName();
         InputStream inputStream = minioClient.getObject(
                 GetObjectArgs.builder()
                         .bucket(bucketName)
@@ -96,7 +102,8 @@ public class MinioServiceImpl implements MinioService {
     }
 
     @Override
-    public StatObjectResponse getFileStat(String objectName, String bucketName) throws Exception {
+    public StatObjectResponse getFileStat(String objectName, BucketType bucketType) throws Exception {
+        String bucketName = bucketType.getBucketName();
         return minioClient.statObject(
                 StatObjectArgs.builder()
                         .bucket(bucketName)

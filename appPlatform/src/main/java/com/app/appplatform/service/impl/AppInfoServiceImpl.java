@@ -3,6 +3,7 @@ package com.app.appplatform.service.impl;
 import com.app.appplatform.common.PageResult;
 import com.app.appplatform.dto.AppInfoDto;
 import com.app.appplatform.entity.AppInfo;
+import com.app.appplatform.enums.BucketType;
 import com.app.appplatform.mapper.AppInfoMapper;
 import com.app.appplatform.service.AppInfoService;
 import com.app.appplatform.service.MinioService;
@@ -95,7 +96,7 @@ public class AppInfoServiceImpl implements AppInfoService {
 //        Path filePath = Paths.get(uploadDir, newFilename);
 //        file.transferTo(filePath.toFile());
         try {
-            String filePath = minioService.uploadFile(file, newFilename, appsBucketName);
+            String filePath = minioService.uploadFile(file, newFilename, BucketType.APPS);
             // 设置应用信息
             appInfo.setPath(filePath);
             appInfo.setSize(fileSizeStr);
