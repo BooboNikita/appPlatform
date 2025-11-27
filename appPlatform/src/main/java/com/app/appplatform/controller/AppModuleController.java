@@ -10,6 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api-modules")
@@ -51,5 +52,11 @@ public class AppModuleController {
     public Result<Void> deleteModule(@PathVariable Long id) {
         appModuleService.deleteModule(id);
         return Result.success(null);
+    }
+
+    @PermitAll
+    @GetMapping("/checkHelperModuleExists")
+    public Result<AppModuleDto> checkHelperModuleExists(@RequestParam String userName, @RequestHeader HttpHeaders headers) {
+        return Result.success(appModuleService.checkHelperModuleExists(userName, headers));
     }
 }

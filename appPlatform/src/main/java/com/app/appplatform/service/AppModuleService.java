@@ -18,4 +18,6 @@ public interface AppModuleService {
     void updateModule(AppModule appModule);
 
     void deleteModule(Long id);
+
+    AppModuleDto checkHelperModuleExists(String username, HttpHeaders headers);
 }

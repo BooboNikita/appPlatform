@@ -95,6 +95,20 @@ public class AppModuleServiceImpl implements AppModuleService {
         appModuleMapper.delete(id);
     }
 
+    @Override
+    public AppModuleDto checkHelperModuleExists(String username, HttpHeaders headers) {
+        List<AppModuleDto> moduleList = getActiveModules(username, headers);
+
+        AppModuleDto res =  moduleList.stream()
+                .filter(module -> module.getTitle().equalsIgnoreCase("智能问答"))
+                .findFirst()
+                .orElse(null);
+        if (res != null) {
+            res.setIcon("http://172.31.101.166:8008/scfile/doors/faction/20251127/ai_module_1764205660779.png");
+        }
+        return res;
+    }
+
     private AppModuleDto convertToAppInfoDto(AppModule appModule) {
         AppModuleDto dto = new AppModuleDto();
         dto.setTitle(appModule.getTitle());
