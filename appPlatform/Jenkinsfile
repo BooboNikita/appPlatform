@@ -13,16 +13,11 @@ pipeline {
         DEPLOY_PATH = '/data/springboot/appPlatform'
     }
 
+    tools {
+            maven 'M3'  // 使用配置的 Maven 名称
+    }
+
     stages {
-//         stage('拉取代码') {
-//             steps {
-//                 git(
-//                     url: 'git@github.com:BooboNikita/appPlatform.git',
-//                     credentialsId: 'github_ssh',
-//                     branch: 'main'
-//                 )
-//             }
-//         }
 
         stage('Maven 构建') {
             steps {
