@@ -46,7 +46,13 @@ public class AppEventController {
     @GetMapping("/recent")
     public Result<PageResult<AppEvent>> getRecentEvents(
             @RequestParam(defaultValue = "1") int pageNum,
-            @RequestParam(defaultValue = "10") int pageSize) {
-        return Result.success(appEventService.getRecentEvents(pageNum, pageSize));
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(required = false) String userId,
+            @RequestParam(required = false) String userName,
+            @RequestParam(required = false) String pageUrl,
+            @RequestParam(required = false) String eventType,
+            @RequestParam(required = false) String filterKey,
+            @RequestParam(required = false) String filterValue) {
+        return Result.success(appEventService.getRecentEvents(pageNum, pageSize, userId, userName, pageUrl, eventType, filterKey, filterValue));
     }
 }

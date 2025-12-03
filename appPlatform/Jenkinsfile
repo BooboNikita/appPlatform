@@ -1,0 +1,67 @@
+pipeline {
+    agent any
+
+    environment {
+        // 应用配置
+        APP_NAME = 'appPlatform'
+        VERSION = '0.0.1-SNAPSHOT'
+        JAR_FILE = "${APP_NAME}-${VERSION}.jar"
+
+        // 服务器配置
+        DEPLOY_SERVER = 'localhost'
+        DEPLOY_USER = 'root'
+        DEPLOY_PATH = '/data/springboot/appPlatform'
+    }
+
+    stages {
+        stage('拉取代码') {
+            steps {
+                checkout scm
+                sh 'git pull origin main'
+            }
+        }
+
+        stage('Maven 构建') {
+            steps {
+                sh 'mvn clean package -DskipTests'
+                archiveArtifacts 'target/*.jar'
+            }
+        }
+
+        stage('部署到服务器') {
+            steps {
+                script {
+                    // 上传 JAR 包
+                    sshagent(credentials: ['your-ssh-credentials']) {
+                        sh "scp -o StrictHostKeyChecking=no target/${JAR_FILE} ${DEPLOY_USER}@${DEPLOY_SERVER}:${DEPLOY_PATH}/"
+
+                        // 重启应用
+                        sh """
+                            ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_SERVER} '
+                                cd ${DEPLOY_PATH}
+                                if [ -f 'app.pid' ]; then
+                                    kill -9 \$(cat app.pid) 2>/dev/null || true
+                                    rm -f app.pid
+                                fi
+                                nohup java -jar ${JAR_FILE} --spring.profiles.active=prod > app.log 2>&1 &
+                                echo \$! > app.pid
+                                echo "应用已重启"
+                            '
+                        """
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '构建部署成功！'
+            // 可以添加成功通知
+        }
+        failure {
+            echo '构建失败！'
+            // 可以添加失败通知
+        }
+    }
+}

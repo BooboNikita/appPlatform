@@ -1,6 +1,5 @@
 package com.app.appplatform;
 
-import com.app.appplatform.dto.AppModuleDto;
 import com.app.appplatform.service.AppModuleService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

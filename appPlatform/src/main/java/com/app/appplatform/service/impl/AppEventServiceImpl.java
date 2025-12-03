@@ -62,10 +62,24 @@ public class AppEventServiceImpl implements AppEventService {
     }
 
     @Override
-    public PageResult<AppEvent> getRecentEvents(int pageNum, int pageSize) {
+    public PageResult<AppEvent> getRecentEvents(int pageNum, int pageSize, 
+            String userId, String userName, String pageUrl, String eventType,
+            String filterKey, String filterValue) {
+        
         // 使用PageHelper进行分页
         PageHelper.startPage(pageNum, pageSize);
-        List<AppEvent> events = appEventMapper.selectRecentEvents();
+        List<AppEvent> events;
+        
+        if (userId != null || userName != null || pageUrl != null || eventType != null || 
+            (filterKey != null && filterValue != null)) {
+            // 使用带过滤条件的查询
+            events = appEventMapper.selectRecentEventsWithFilters(
+                userId, userName, pageUrl, eventType, filterKey, filterValue);
+        } else {
+            // 使用普通查询
+            events = appEventMapper.selectRecentEvents();
+        }
+        
         PageInfo<AppEvent> pageInfo = new PageInfo<>(events);
         
         return new PageResult<>(

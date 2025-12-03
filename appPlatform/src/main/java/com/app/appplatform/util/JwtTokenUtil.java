@@ -1,9 +1,11 @@
 package com.app.appplatform.util;
 
+import com.app.appplatform.service.JwtUserDetailsService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -26,6 +28,9 @@ public class JwtTokenUtil {
 
     @Value("${jwt.expiration}")
     private Long expiration;
+
+    @Autowired
+    private JwtUserDetailsService jwtUserDetailsService;
 
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
@@ -50,6 +55,10 @@ public class JwtTokenUtil {
             logger.error("JWT 令牌验证失败: " + e.getMessage(), e);
             return false;
         }
+    }
+
+    public Boolean validateToken(String token) {
+        return validateToken(token, jwtUserDetailsService.loadUserByUsername(extractUsername(token)));
     }
 
     public String extractUsername(String token) {

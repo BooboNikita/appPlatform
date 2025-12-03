@@ -14,10 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -84,17 +81,6 @@ public class AppInfoServiceImpl implements AppInfoService {
         }
         String newFilename = UUID.randomUUID().toString() + fileExtension;
 
-//        // 创建上传目录（如果不存在）
-//        File uploadDirFile = new File(uploadDir);
-//        if (!uploadDirFile.exists()) {
-//            if (!uploadDirFile.mkdirs()) {
-//                throw new IOException("无法创建上传目录: " + uploadDir);
-//            }
-//        }
-//
-//        // 保存文件
-//        Path filePath = Paths.get(uploadDir, newFilename);
-//        file.transferTo(filePath.toFile());
         try {
             String filePath = minioService.uploadFile(file, newFilename, BucketType.APPS);
             // 设置应用信息

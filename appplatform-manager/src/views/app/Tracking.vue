@@ -36,9 +36,7 @@
           >
             <el-option label="click" value="click" />
             <el-option label="view" value="view" />
-            <el-option label="scroll" value="scroll" />
-            <el-option label="submit" value="submit" />
-            <el-option label="share" value="share" />
+            <el-option label="exposure" value="exposure" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -272,31 +270,14 @@ const queryParams = reactive({
 
 /**
  * 创建带有 Authorization token 的 WebSocket 连接
- * 由于标准 WebSocket API 不支持设置自定义 HTTP headers，
- * 后端需要通过以下方式之一获取 token：
- * 1. 通过 Cookie (如果已登录)
- * 2. 通过 HandshakeInterceptor 中的自定义逻辑
- * 3. 通过建立连接后的第一条消息
+ * 通过 URL 参数传递 token
  */
 const createWebSocketWithAuth = (url: string, token: string): WebSocket => {
-  const socket = new WebSocket(url);
-
-  // 在连接打开时发送 Authorization token
-  const originalOnOpen = socket.onopen;
-  socket.onopen = (event) => {
-    // 发送认证消息
-    socket.send(
-      JSON.stringify({
-        type: "CONNECT",
-        authorization: token,
-      })
-    );
-    // 调用原始 onopen 处理
-    if (originalOnOpen) {
-      originalOnOpen.call(socket, event);
-    }
-  };
-
+  // ✅ 检查 URL 是否已经包含参数
+  // 如果已有参数，使用 & 连接；否则使用 ?
+  const separator = url.includes("?") ? "&" : "?";
+  const wsUrlWithToken = `${url}${separator}token=${encodeURIComponent(token)}`;
+  const socket = new WebSocket(wsUrlWithToken);
   return socket;
 };
 

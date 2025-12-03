@@ -60,9 +60,28 @@ public interface AppEventMapper {
     })
     AppEvent selectById(Long id);
 
-    @Select("SELECT * FROM app_event ORDER BY recv_time DESC")
+    @Select({
+        "<script>",
+        "SELECT * FROM app_event ",
+        "<where>",
+        "   <if test='userId != null and userId != \"\"'> AND user_id LIKE CONCAT('%', #{userId}, '%') </if>",
+        "   <if test='userName != null and userName != \"\"'> AND user_name LIKE CONCAT('%', #{userName}, '%') </if>",
+        "   <if test='pageUrl != null and pageUrl != \"\"'> AND page_url LIKE CONCAT('%', #{pageUrl}, '%') </if>",
+        "   <if test='eventType != null and eventType != \"\"'> AND event_type = #{eventType} </if>",
+        "   <if test='filterKey != null and filterKey != \"\" and filterValue != null and filterValue != \"\"'> ",
+        "       <choose>",
+        "           <when test='filterKey == \"userId\"'> AND user_id LIKE CONCAT('%', #{filterValue}, '%') </when>",
+        "           <when test='filterKey == \"userName\"'> AND user_name LIKE CONCAT('%', #{filterValue}, '%') </when>",
+        "           <when test='filterKey == \"pageUrl\"'> AND page_url LIKE CONCAT('%', #{filterValue}, '%') </when>",
+        "           <when test='filterKey == \"eventType\"'> AND event_type = #{filterValue} </when>",
+        "       </choose>",
+        "   </if>",
+        "</where>",
+        " ORDER BY recv_time DESC",
+        "</script>"
+    })
     @Results({
-        // Top-level fields
+        // 保持原有的 @Results 映射
         @Result(property = "id", column = "id"),
         @Result(property = "userId", column = "user_id"),
         @Result(property = "userName", column = "user_name"),
@@ -71,12 +90,8 @@ public interface AppEventMapper {
         @Result(property = "referrer", column = "referrer"),
         @Result(property = "status", column = "status"),
         @Result(property = "extra", column = "extra"),
-        
-        // AppInfo mappings
         @Result(property = "app.version", column = "app_ver"),
         @Result(property = "app.buildNumber", column = "app_buildNum"),
-        
-        // DeviceInfo mappings
         @Result(property = "device.deviceId", column = "device_id"),
         @Result(property = "device.model", column = "device_model"),
         @Result(property = "device.brand", column = "device_brand"),
@@ -85,8 +100,43 @@ public interface AppEventMapper {
         @Result(property = "device.osVersion", column = "os_ver"),
         @Result(property = "device.networkType", column = "network_type"),
         @Result(property = "device.screenResolution", column = "screen_resolution"),
-        
-        // EventInfo mappings
+        @Result(property = "event.eventId", column = "event_id"),
+        @Result(property = "event.eventType", column = "event_type"),
+        @Result(property = "event.eventTime", column = "event_time"),
+        @Result(property = "event.recvTime", column = "recv_time"),
+        @Result(property = "event.eventContent", column = "event_content")
+    })
+    // 使用PageHelper进行分页，不需要在SQL中写limit
+    List<AppEvent> selectRecentEventsWithFilters(
+            @Param("userId") String userId,
+            @Param("userName") String userName,
+            @Param("pageUrl") String pageUrl,
+            @Param("eventType") String eventType,
+            @Param("filterKey") String filterKey,
+            @Param("filterValue") String filterValue
+    );
+    
+    @Select("SELECT * FROM app_event ORDER BY recv_time DESC")
+    @Results({
+        // 保持原有的 @Results 映射
+        @Result(property = "id", column = "id"),
+        @Result(property = "userId", column = "user_id"),
+        @Result(property = "userName", column = "user_name"),
+        @Result(property = "sessionId", column = "session_id"),
+        @Result(property = "pageUrl", column = "page_url"),
+        @Result(property = "referrer", column = "referrer"),
+        @Result(property = "status", column = "status"),
+        @Result(property = "extra", column = "extra"),
+        @Result(property = "app.version", column = "app_ver"),
+        @Result(property = "app.buildNumber", column = "app_buildNum"),
+        @Result(property = "device.deviceId", column = "device_id"),
+        @Result(property = "device.model", column = "device_model"),
+        @Result(property = "device.brand", column = "device_brand"),
+        @Result(property = "device.ip", column = "device_ip"),
+        @Result(property = "device.os", column = "os"),
+        @Result(property = "device.osVersion", column = "os_ver"),
+        @Result(property = "device.networkType", column = "network_type"),
+        @Result(property = "device.screenResolution", column = "screen_resolution"),
         @Result(property = "event.eventId", column = "event_id"),
         @Result(property = "event.eventType", column = "event_type"),
         @Result(property = "event.eventTime", column = "event_time"),

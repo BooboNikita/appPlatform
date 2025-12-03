@@ -1,16 +1,28 @@
 package com.app.appplatform.websocket;
 
+import com.app.appplatform.service.JwtUserDetailsService;
+import com.app.appplatform.util.JwtTokenUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import io.netty.handler.codec.http.HttpHeaderValidationUtil;
+
+@Slf4j
 @Component
 public class NativeWebSocketHandler extends TextWebSocketHandler {
+
+    @Autowired
+    private JwtTokenUtil jwtTokenUtil;
 
     private static final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -18,12 +30,42 @@ public class NativeWebSocketHandler extends TextWebSocketHandler {
     // 新连接建立时调用
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
+        String token = extractTokenFromUri(session.getUri());
+
+        if (token == null || !jwtTokenUtil.validateToken(token)) {
+            log.warn("无效的 token，关闭连接");
+            try {
+                session.close(CloseStatus.NOT_ACCEPTABLE.withReason("无效的 token"));
+            } catch (IOException e) {
+                System.err.println("关闭WebSocket连接时出错: " + e.getMessage());
+                // 可以选择记录更详细的日志
+            }
+            return;
+        }
+
         String sessionId = session.getId();
         sessions.put(sessionId, session);
         System.out.println("新连接建立, sessionId: " + sessionId);
         
         // 发送欢迎消息
         sendMessage(session, createMessage("system", "连接成功", null));
+    }
+
+    private String extractTokenFromUri(URI uri) {
+        if (uri == null || uri.getQuery() == null) {
+            return null;
+        }
+
+        // 解析查询参数
+        String query = uri.getQuery();
+        String[] params = query.split("&");
+        for (String param : params) {
+            String[] keyValue = param.split("=");
+            if (keyValue.length == 2 && "token".equals(keyValue[0])) {
+                return keyValue[1];
+            }
+        }
+        return null;
     }
 
     // 处理接收到的消息
