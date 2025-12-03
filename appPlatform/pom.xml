@@ -95,6 +95,24 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- RabbitMQ -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+        
+        <!-- WebSocket -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+        
+        <!-- JSON Processing -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -152,7 +170,7 @@
     <build>
         <resources>
             <resource>
-                <directory>src/main/resources</directory>
+                <directory>src/main/resources</directory>r
                 <filtering>true</filtering>
                 <includes>
                     <include>**/application*.properties</include>

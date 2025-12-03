@@ -33,6 +33,12 @@ const routes: Array<RouteRecordRaw> = [
         meta: { title: "上传应用", icon: "Upload", hiddenInMenu: true },
       },
       {
+        path: "/app/tracking",
+        name: "Tracking",
+        component: () => import("@/views/app/Tracking.vue"),
+        meta: { title: "埋点数据", icon: "DataAnalysis" },
+      },
+      {
         path: "/logs",
         name: "Logs",
         component: () => import("@/views/logs/List.vue"),

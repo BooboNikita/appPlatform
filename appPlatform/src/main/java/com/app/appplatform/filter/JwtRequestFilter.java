@@ -40,7 +40,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             Pattern.compile("^/webjars/.*"),
             Pattern.compile("^/favicon\\.ico$"),
             Pattern.compile("^/actuator/.*"),
-            Pattern.compile("^/.well-known/.*")
+            Pattern.compile("^/.well-known/.*"),
+            Pattern.compile("^/ws.*")
     );
 
     @Autowired
