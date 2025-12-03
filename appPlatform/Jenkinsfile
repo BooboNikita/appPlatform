@@ -16,8 +16,11 @@ pipeline {
     stages {
         stage('拉取代码') {
             steps {
-                checkout scm
-                sh 'git pull origin main'
+                git(
+                    url: 'git@github.com:BooboNikita/appPlatform.git',
+                    credentialsId: 'github_ssh',
+                    branch: 'main'
+                )
             }
         }
 
