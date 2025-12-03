@@ -14,15 +14,15 @@ pipeline {
     }
 
     stages {
-        stage('拉取代码') {
-            steps {
-                git(
-                    url: 'git@github.com:BooboNikita/appPlatform.git',
-                    credentialsId: 'github_ssh',
-                    branch: 'main'
-                )
-            }
-        }
+//         stage('拉取代码') {
+//             steps {
+//                 git(
+//                     url: 'git@github.com:BooboNikita/appPlatform.git',
+//                     credentialsId: 'github_ssh',
+//                     branch: 'main'
+//                 )
+//             }
+//         }
 
         stage('Maven 构建') {
             steps {
