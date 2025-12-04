@@ -68,6 +68,17 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import("@/views/app/LoginCode.vue"),
         meta: { title: "二维码登录", icon: "FullScreen" },
       },
+      {
+        path: "#",
+        name: "Build",
+        component: () => import("@/views/app/LoginCode.vue"),
+        meta: {
+          title: "构建平台",
+          icon: "Open",
+          external: true,
+          href: "http://172.16.110.45:14808/",
+        },
+      },
     ],
   },
 ];

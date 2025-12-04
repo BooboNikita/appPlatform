@@ -10,7 +10,16 @@
         router
       >
         <template v-for="route in routes" :key="route.path">
-          <el-menu-item v-if="!route.children" :index="route.path">
+          <a
+            v-if="route.meta?.external"
+            :href="(route.meta?.href as string)"
+            target="_blank"
+            class="el-menu-item-link"
+          >
+            <el-icon><component :is="route.meta?.icon" /></el-icon>
+            <span>{{ route.meta?.title }}</span>
+          </a>
+          <el-menu-item v-else-if="!route.children" :index="route.path">
             <el-icon><component :is="route.meta?.icon" /></el-icon>
             <span>{{ route.meta?.title }}</span>
           </el-menu-item>
@@ -86,6 +95,7 @@ import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useUserStore } from "@/stores/user";
 import { ElMessageBox } from "element-plus";
+import { Open } from "@element-plus/icons-vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -135,6 +145,8 @@ const handleLogout = () => {
   transition: width 0.28s;
   flex-shrink: 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 
   .logo {
     height: 50px;
@@ -145,7 +157,6 @@ const handleLogout = () => {
     font-weight: 600;
     background-color: #2b2f3a;
   }
-
   .el-menu-vertical {
     border-right: none;
     height: calc(100% - 50px);
@@ -163,6 +174,35 @@ const handleLogout = () => {
         color: #409eff;
         background-color: #263445;
       }
+    }
+  }
+
+  .el-menu-item-link {
+    display: flex;
+    align-items: center;
+    padding: 0 25px;
+    height: 56px;
+    color: #bfcbd9;
+    text-decoration: none;
+    transition: all 0.3s;
+    cursor: pointer;
+    text-align: left;
+
+    &:hover {
+      background-color: #263445;
+      color: #409eff;
+    }
+
+    .el-icon {
+      margin-right: 8px;
+      width: 1em;
+      font-size: 18px;
+    }
+
+    span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 
