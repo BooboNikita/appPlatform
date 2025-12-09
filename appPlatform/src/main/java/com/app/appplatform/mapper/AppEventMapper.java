@@ -2,6 +2,7 @@ package com.app.appplatform.mapper;
 
 import com.app.appplatform.entity.AppEvent;
 import org.apache.ibatis.annotations.*;
+import org.apache.ibatis.type.LocalDateTimeTypeHandler;
 
 import java.util.List;
 
@@ -54,8 +55,8 @@ public interface AppEventMapper {
         // EventInfo mappings
         @Result(property = "eventInfo.eventId", column = "event_id"),
         @Result(property = "eventInfo.eventType", column = "event_type"),
-        @Result(property = "eventInfo.eventTime", column = "event_time"),
-        @Result(property = "eventInfo.recvTime", column = "recv_time"),
+        @Result(property = "eventInfo.eventTime", column = "event_time", typeHandler = LocalDateTimeTypeHandler.class),
+        @Result(property = "eventInfo.recvTime", column = "recv_time", typeHandler = LocalDateTimeTypeHandler.class),
         @Result(property = "eventInfo.eventContent", column = "event_content")
     })
     AppEvent selectById(Long id);
@@ -102,8 +103,8 @@ public interface AppEventMapper {
         @Result(property = "device.screenResolution", column = "screen_resolution"),
         @Result(property = "eventInfo.eventId", column = "event_id"),
         @Result(property = "eventInfo.eventType", column = "event_type"),
-        @Result(property = "eventInfo.eventTime", column = "event_time"),
-        @Result(property = "eventInfo.recvTime", column = "recv_time"),
+        @Result(property = "eventInfo.eventTime", column = "event_time", typeHandler = LocalDateTimeTypeHandler.class),
+        @Result(property = "eventInfo.recvTime", column = "recv_time", typeHandler = LocalDateTimeTypeHandler.class),
         @Result(property = "eventInfo.eventContent", column = "event_content")
     })
     // 使用PageHelper进行分页，不需要在SQL中写limit
