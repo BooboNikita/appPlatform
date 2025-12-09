@@ -86,19 +86,19 @@
       <el-table-column label="事件信息" min-width="140">
         <template #default="{ row }">
           <div class="event-cell">
-            <div>类型: {{ row.event.eventType }}</div>
-            <div>ID: {{ row.event.eventId }}</div>
+            <div>类型: {{ row.eventInfo.eventType }}</div>
+            <div>ID: {{ row.eventInfo.eventId }}</div>
           </div>
         </template>
       </el-table-column>
       <el-table-column prop="event.eventTime" label="事件时间" width="180">
         <template #default="{ row }">
-          {{ formatTimestamp(row.event.eventTime) }}
+          {{ formatTimestamp(row.eventInfo.eventTime) }}
         </template>
       </el-table-column>
       <el-table-column prop="event.recvTime" label="接收时间" width="180">
         <template #default="{ row }">
-          {{ formatTimestamp(row.event.recvTime) }}
+          {{ formatTimestamp(row.eventInfo.recvTime) }}
         </template>
       </el-table-column>
       <el-table-column label="操作" width="100" fixed="right">
@@ -192,16 +192,16 @@
         <el-divider>事件信息</el-divider>
         <el-descriptions :column="2" border>
           <el-descriptions-item label="事件ID" :span="2">
-            {{ selectedItem.event.eventId }}
+            {{ selectedItem.eventInfo.eventId }}
           </el-descriptions-item>
           <el-descriptions-item label="事件类型">
-            {{ selectedItem.event.eventType }}
+            {{ selectedItem.eventInfo.eventType }}
           </el-descriptions-item>
           <el-descriptions-item label="事件时间">
-            {{ formatTimestamp(selectedItem.event.eventTime) }}
+            {{ formatTimestamp(selectedItem.eventInfo.eventTime) }}
           </el-descriptions-item>
           <el-descriptions-item label="接收时间" :span="2">
-            {{ formatTimestamp(selectedItem.event.recvTime) }}
+            {{ formatTimestamp(selectedItem.eventInfo.recvTime) }}
           </el-descriptions-item>
         </el-descriptions>
       </div>
