@@ -286,7 +286,7 @@ const createWebSocketWithAuth = (url: string, token: string): WebSocket => {
  */
 const formatTimestamp = (timestamp: number): string => {
   if (!timestamp) return "-";
-  const date = new Date(timestamp * 1000);
+  const date = new Date(timestamp);
   return date.toLocaleString();
 };
 

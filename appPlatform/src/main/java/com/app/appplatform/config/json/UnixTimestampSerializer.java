@@ -12,7 +12,7 @@ public class UnixTimestampSerializer extends JsonSerializer<LocalDateTime> {
     @Override
     public void serialize(LocalDateTime value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
         if (value != null) {
-            long timestamp = value.toInstant(ZoneOffset.UTC).toEpochMilli();
+            long timestamp = value.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
             gen.writeNumber(timestamp);
         }
     }

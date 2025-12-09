@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
@@ -43,7 +44,7 @@ public class AppEventServiceImpl implements AppEventService {
     @Transactional
     public void saveEvent(AppEvent appEvent) {
         if (appEvent.getEventInfo().getRecvTime() == null) {
-            appEvent.getEventInfo().setRecvTime(LocalDateTime.now());
+            appEvent.getEventInfo().setRecvTime(LocalDateTime.now(ZoneOffset.systemDefault()));
         }
         appEventMapper.insert(appEvent);
         // 发送WebSocket通知
@@ -55,7 +56,7 @@ public class AppEventServiceImpl implements AppEventService {
     public void batchSaveEvents(List<AppEvent> events) {
         events.forEach(event -> {
             if (event.getEventInfo().getRecvTime() == null) {
-                event.getEventInfo().setRecvTime(LocalDateTime.now());
+                event.getEventInfo().setRecvTime(LocalDateTime.now(ZoneOffset.UTC));
             }
             appEventMapper.insert(event);
         });
