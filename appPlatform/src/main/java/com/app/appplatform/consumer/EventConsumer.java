@@ -25,10 +25,11 @@ public class EventConsumer {
     public void receiveEvent(@Payload String message) {
         try {
             AppEvent event = objectMapper.readValue(message, AppEvent.class);
-            log.info("Received event: {}", event.getEvent().getEventId());
+            log.info("Received event: {}", event.getEventInfo().getEventId());
             appEventService.saveEvent(event);
         } catch (IOException e) {
             log.error("Error processing message: {}", message, e);
         }
     }
+
 }

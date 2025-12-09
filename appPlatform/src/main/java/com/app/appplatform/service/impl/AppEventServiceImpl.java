@@ -42,8 +42,8 @@ public class AppEventServiceImpl implements AppEventService {
     @Override
     @Transactional
     public void saveEvent(AppEvent appEvent) {
-        if (appEvent.getEvent().getRecvTime() == null) {
-            appEvent.getEvent().setRecvTime(LocalDateTime.now());
+        if (appEvent.getEventInfo().getRecvTime() == null) {
+            appEvent.getEventInfo().setRecvTime(LocalDateTime.now());
         }
         appEventMapper.insert(appEvent);
         // 发送WebSocket通知
@@ -54,8 +54,8 @@ public class AppEventServiceImpl implements AppEventService {
     @Transactional
     public void batchSaveEvents(List<AppEvent> events) {
         events.forEach(event -> {
-            if (event.getEvent().getRecvTime() == null) {
-                event.getEvent().setRecvTime(LocalDateTime.now());
+            if (event.getEventInfo().getRecvTime() == null) {
+                event.getEventInfo().setRecvTime(LocalDateTime.now());
             }
             appEventMapper.insert(event);
         });

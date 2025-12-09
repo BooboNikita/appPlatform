@@ -28,7 +28,7 @@ public class AppEvent {
     private DeviceInfo device;
     
     // 事件信息
-    private EventInfo event;
+    private EventInfo eventInfo;
     
     // 其他扩展信息
     private String extra;

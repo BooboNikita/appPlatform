@@ -16,7 +16,7 @@ public interface AppEventMapper {
             screen_resolution, extra, status
         ) VALUES (
             #{app.version}, #{app.buildNumber}, #{userId}, #{userName}, 
-            #{event.eventId}, #{event.eventType}, #{event.eventTime}, #{event.recvTime},
+            #{eventInfo.eventId}, #{eventInfo.eventType}, #{eventInfo.eventTime}, #{eventInfo.recvTime},
             #{pageUrl}, #{referrer}, #{sessionId}, #{device.os}, #{device.osVersion},
             #{device.deviceId}, #{device.model}, #{device.brand}, #{device.ip}, #{device.networkType},
             #{device.screenResolution}, #{extra}, #{status}
@@ -52,11 +52,11 @@ public interface AppEventMapper {
         @Result(property = "device.screenResolution", column = "screen_resolution"),
         
         // EventInfo mappings
-        @Result(property = "event.eventId", column = "event_id"),
-        @Result(property = "event.eventType", column = "event_type"),
-        @Result(property = "event.eventTime", column = "event_time"),
-        @Result(property = "event.recvTime", column = "recv_time"),
-        @Result(property = "event.eventContent", column = "event_content")
+        @Result(property = "eventInfo.eventId", column = "event_id"),
+        @Result(property = "eventInfo.eventType", column = "event_type"),
+        @Result(property = "eventInfo.eventTime", column = "event_time"),
+        @Result(property = "eventInfo.recvTime", column = "recv_time"),
+        @Result(property = "eventInfo.eventContent", column = "event_content")
     })
     AppEvent selectById(Long id);
 
@@ -100,11 +100,11 @@ public interface AppEventMapper {
         @Result(property = "device.osVersion", column = "os_ver"),
         @Result(property = "device.networkType", column = "network_type"),
         @Result(property = "device.screenResolution", column = "screen_resolution"),
-        @Result(property = "event.eventId", column = "event_id"),
-        @Result(property = "event.eventType", column = "event_type"),
-        @Result(property = "event.eventTime", column = "event_time"),
-        @Result(property = "event.recvTime", column = "recv_time"),
-        @Result(property = "event.eventContent", column = "event_content")
+        @Result(property = "eventInfo.eventId", column = "event_id"),
+        @Result(property = "eventInfo.eventType", column = "event_type"),
+        @Result(property = "eventInfo.eventTime", column = "event_time"),
+        @Result(property = "eventInfo.recvTime", column = "recv_time"),
+        @Result(property = "eventInfo.eventContent", column = "event_content")
     })
     // 使用PageHelper进行分页，不需要在SQL中写limit
     List<AppEvent> selectRecentEventsWithFilters(
@@ -137,11 +137,11 @@ public interface AppEventMapper {
         @Result(property = "device.osVersion", column = "os_ver"),
         @Result(property = "device.networkType", column = "network_type"),
         @Result(property = "device.screenResolution", column = "screen_resolution"),
-        @Result(property = "event.eventId", column = "event_id"),
-        @Result(property = "event.eventType", column = "event_type"),
-        @Result(property = "event.eventTime", column = "event_time"),
-        @Result(property = "event.recvTime", column = "recv_time"),
-        @Result(property = "event.eventContent", column = "event_content")
+        @Result(property = "eventInfo.eventId", column = "event_id"),
+        @Result(property = "eventInfo.eventType", column = "event_type"),
+        @Result(property = "eventInfo.eventTime", column = "event_time"),
+        @Result(property = "eventInfo.recvTime", column = "recv_time"),
+        @Result(property = "eventInfo.eventContent", column = "event_content")
     })
     // 使用PageHelper进行分页，不需要在SQL中写limit
     List<AppEvent> selectRecentEvents();

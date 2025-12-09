@@ -7,7 +7,7 @@ create table if not exists app_event (
     app_buildNum varchar(255) not null COMMENT 'app构建号',
     user_id varchar(255) not null COMMENT '用户ID',
     user_name varchar(255) not null COMMENT '用户名称',
-    event_id varchar(255) not null COMMENT '事件ID',
+    event_id varchar(255) null COMMENT '事件ID',
     event_type varchar(50) not null COMMENT '事件类型(view/click/exposure)',
     event_time datetime not null,
     recv_time datetime not null,
