@@ -60,10 +60,10 @@ export const exportTrackingDataAsCSV = (
     item.device.osVersion,
     item.device.networkType,
     item.device.screenResolution,
-    item.event.eventId,
-    item.event.eventType,
-    new Date(item.event.eventTime * 1000).toLocaleString(),
-    new Date(item.event.recvTime * 1000).toLocaleString(),
+    item.eventInfo.eventId,
+    item.eventInfo.eventType,
+    new Date(item.eventInfo.eventTime * 1000).toLocaleString(),
+    new Date(item.eventInfo.recvTime * 1000).toLocaleString(),
   ]);
 
   // 合并为 CSV 字符串
@@ -139,8 +139,8 @@ export const getTrackingStatistics = (data: TrackingEvent[]) => {
 
   data.forEach((item) => {
     // 统计事件类型
-    statistics.eventTypes[item.event.eventType] =
-      (statistics.eventTypes[item.event.eventType] || 0) + 1;
+    statistics.eventTypes[item.eventInfo.eventType] =
+      (statistics.eventTypes[item.eventInfo.eventType] || 0) + 1;
 
     // 统计设备型号
     statistics.devices[item.device.model] =
@@ -197,10 +197,10 @@ export const groupTrackingByEventType = (data: TrackingEvent[]) => {
   const grouped = new Map<string, TrackingEvent[]>();
 
   data.forEach((item) => {
-    if (!grouped.has(item.event.eventType)) {
-      grouped.set(item.event.eventType, []);
+    if (!grouped.has(item.eventInfo.eventType)) {
+      grouped.set(item.eventInfo.eventType, []);
     }
-    grouped.get(item.event.eventType)!.push(item);
+    grouped.get(item.eventInfo.eventType)!.push(item);
   });
 
   return Object.fromEntries(grouped);
@@ -216,7 +216,8 @@ export const filterTrackingByTimeRange = (
 ) => {
   return data.filter(
     (item) =>
-      item.event.eventTime >= startTime && item.event.eventTime <= endTime
+      item.eventInfo.eventTime >= startTime &&
+      item.eventInfo.eventTime <= endTime
   );
 };
 
@@ -261,7 +262,7 @@ export const calculateAverageResponseTime = (data: TrackingEvent[]): number => {
   if (data.length === 0) return 0;
 
   const totalTime = data.reduce((sum, item) => {
-    return sum + (item.event.recvTime - item.event.eventTime);
+    return sum + (item.eventInfo.recvTime - item.eventInfo.eventTime);
   }, 0);
 
   return totalTime / data.length;
@@ -274,7 +275,7 @@ export const getMostFrequentEvent = (data: TrackingEvent[]) => {
   const eventCounts = new Map<string, number>();
 
   data.forEach((item) => {
-    const key = item.event.eventType;
+    const key = item.eventInfo.eventType;
     eventCounts.set(key, (eventCounts.get(key) || 0) + 1);
   });
 

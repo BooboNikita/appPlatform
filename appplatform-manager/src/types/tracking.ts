@@ -37,7 +37,7 @@ export interface TrackingEvent {
   status: number;
   app: AppInfo;
   device: DeviceInfo;
-  event: EventInfo;
+  eventInfo: EventInfo;
 }
 
 // 分页结果
