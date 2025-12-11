@@ -4,9 +4,10 @@ import com.app.appplatform.common.PageResult;
 import com.app.appplatform.common.Result;
 import com.app.appplatform.entity.AppEvent;
 import com.app.appplatform.service.AppEventService;
+import com.app.appplatform.service.ConfigService;
+import io.jsonwebtoken.lang.Maps;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,8 +17,42 @@ import java.util.Map;
 @RequestMapping("/api-events")
 public class AppEventController {
 
-    @Autowired
-    private AppEventService appEventService;
+    private static final String CONFIG_KEY_EVENT_TRACKING = "event_tracking_enabled";
+
+    final private AppEventService appEventService;
+
+    final private ConfigService configService;
+
+    AppEventController(AppEventService appEventService, ConfigService configService) {
+        this.appEventService = appEventService;
+        this.configService = configService;
+    }
+
+    /**
+     * 提交单个事件
+     */
+    /**
+     * 获取埋点上报开关状态
+     * @return 当前埋点上报开关状态
+     */
+    @PermitAll
+    @GetMapping("/tracking/status")
+    public Result<Map<String, Boolean>> getTrackingStatus() {
+        boolean isEnabled = configService.getBooleanConfig(CONFIG_KEY_EVENT_TRACKING, true);
+        return Result.success(Map.of("eventTrack", isEnabled));
+    }
+
+    /**
+     * 设置埋点上报开关状态
+     * @param enabled 是否开启埋点上报
+     * @return 操作结果
+     */
+    @PermitAll
+    @PostMapping("/tracking/set-status")
+    public Result<?> setTrackingStatus(@RequestParam boolean enabled) {
+        configService.updateConfig(CONFIG_KEY_EVENT_TRACKING, String.valueOf(enabled));
+        return Result.success("埋点上报已" + (enabled ? "开启" : "关闭"));
+    }
 
     /**
      * 提交单个事件
@@ -25,6 +60,9 @@ public class AppEventController {
     @PermitAll
     @PostMapping("/submit")
     public Result<?> submitEvent(@RequestBody AppEvent event) {
+        if (!configService.getBooleanConfig(CONFIG_KEY_EVENT_TRACKING, true)) {
+            return Result.success("埋点上报已关闭，事件未提交");
+        }
         appEventService.sendToQueue(event);
         return Result.success("提交成功");
     }
@@ -35,6 +73,9 @@ public class AppEventController {
     @PermitAll
     @PostMapping("/batch")
     public Result<?> batchSubmitEvents(@RequestBody List<AppEvent> events) {
+        if (!configService.getBooleanConfig(CONFIG_KEY_EVENT_TRACKING, true)) {
+            return Result.success("埋点上报已关闭，批量事件未提交");
+        }
         events.forEach(appEventService::sendToQueue);
         return Result.success("提交成功");
     }
@@ -42,7 +83,6 @@ public class AppEventController {
     /**
      * 获取最近的事件
      */
-    @PermitAll
     @GetMapping("/recent")
     public Result<PageResult<AppEvent>> getRecentEvents(
             @RequestParam(defaultValue = "1") int pageNum,

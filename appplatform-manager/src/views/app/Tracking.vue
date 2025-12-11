@@ -59,6 +59,15 @@
         <el-icon><Refresh /></el-icon>
         刷新
       </el-button>
+      <div class="tracking-switch">
+        <el-switch
+          v-model="trackingStatus"
+          @change="handleTrackingStatusChange"
+        />
+        <span class="switch-text">{{
+          trackingStatus ? "埋点上报打开" : "埋点上报关闭"
+        }}</span>
+      </div>
     </div>
 
     <el-table
@@ -204,6 +213,32 @@
             {{ formatTimestamp(selectedItem.eventInfo.recvTime) }}
           </el-descriptions-item>
         </el-descriptions>
+
+        <el-divider
+          v-if="
+            selectedItem?.extra &&
+            Object.keys(parseExtra(selectedItem?.extra)).length > 0
+          "
+          >额外信息</el-divider
+        >
+        <el-descriptions
+          v-if="
+            selectedItem?.extra &&
+            Object.keys(parseExtra(selectedItem?.extra)).length > 0
+          "
+          :column="1"
+          border
+        >
+          <el-descriptions-item
+            v-for="(value, key) in parseExtra(selectedItem.extra)"
+            :key="key"
+            :label="key"
+          >
+            <div style="word-break: break-all">
+              {{ typeof value === "object" ? JSON.stringify(value) : value }}
+            </div>
+          </el-descriptions-item>
+        </el-descriptions>
       </div>
     </el-drawer>
 
@@ -245,7 +280,12 @@
 import { ref, reactive, onMounted, onUnmounted } from "vue";
 import { ElMessage } from "element-plus";
 import { Refresh, CircleClose, CircleCheck } from "@element-plus/icons-vue";
-import { getAppEventList, getAppEventWebSocketUrl } from "@/api/app_event";
+import {
+  getAppEventList,
+  getAppEventWebSocketUrl,
+  getTrackingStatus,
+  setTrackingStatus,
+} from "@/api/app_event";
 import { TrackingEvent } from "@/types/tracking";
 import { useUserStore } from "@/stores/user";
 
@@ -256,6 +296,7 @@ const detailVisible = ref(false);
 const deviceVisible = ref(false);
 const selectedItem = ref<TrackingEvent | null>(null);
 const wsConnected = ref(false);
+const trackingStatus = ref(false);
 let ws: WebSocket | null = null;
 let wsReconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -288,6 +329,23 @@ const formatTimestamp = (timestamp: number): string => {
   if (!timestamp) return "-";
   const date = new Date(timestamp);
   return date.toLocaleString();
+};
+
+/**
+ * 解析 extra 字段为对象
+ * 如果是 JSON 字符串则解析，否则返回原值
+ */
+const parseExtra = (extra: string | null | undefined): Record<string, any> => {
+  if (!extra || extra == "null") return {};
+  try {
+    if (typeof extra === "string") {
+      return JSON.parse(extra);
+    }
+    return {};
+  } catch (error) {
+    console.warn("Failed to parse extra as JSON:", extra);
+    return {};
+  }
 };
 
 /**
@@ -479,8 +537,40 @@ const closeWebSocket = () => {
   ElMessage.info("实时刷新已关闭");
 };
 
+/**
+ * 获取埋点上报状态
+ */
+const fetchTrackingStatus = async () => {
+  try {
+    const response = await getTrackingStatus();
+    console.log("获取埋点状态:", response);
+    if (response.data !== undefined) {
+      trackingStatus.value = response.data.eventTrack;
+    }
+  } catch (error) {
+    console.error("获取埋点状态失败:", error);
+  }
+};
+
+/**
+ * 处理埋点上报状态变化
+ */
+const handleTrackingStatusChange = async (val: string | number | boolean) => {
+  const status = val as boolean;
+  try {
+    await setTrackingStatus(status);
+    ElMessage.success(`埋点上报已${status ? "打开" : "关闭"}`);
+  } catch (error) {
+    console.error("设置埋点状态失败:", error);
+    // 恢复状态
+    trackingStatus.value = !status;
+    ElMessage.error("设置埋点状态失败");
+  }
+};
+
 onMounted(() => {
   fetchTrackingList();
+  fetchTrackingStatus();
 });
 
 onUnmounted(() => {
@@ -503,6 +593,19 @@ onUnmounted(() => {
     margin-bottom: 20px;
     display: flex;
     gap: 10px;
+    align-items: center;
+
+    .tracking-switch {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: 20px;
+
+      .switch-text {
+        font-size: 14px;
+        color: #606266;
+      }
+    }
   }
 
   .pagination-container {

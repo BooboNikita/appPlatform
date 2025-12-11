@@ -38,6 +38,7 @@ export interface TrackingEvent {
   app: AppInfo;
   device: DeviceInfo;
   eventInfo: EventInfo;
+  extra: string;
 }
 
 // 分页结果
@@ -62,4 +63,8 @@ export interface WebSocketMessage {
   type: string;
   data: TrackingEvent;
   timestamp: number;
+}
+
+export interface EventStatus {
+  eventTrack: boolean;
 }
