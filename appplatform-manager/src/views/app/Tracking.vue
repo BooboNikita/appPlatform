@@ -77,21 +77,9 @@
       :style="{ width: '100%' }"
     >
       <el-table-column prop="id" label="ID" width="60" />
-      <el-table-column prop="userId" label="用户ID" min-width="120" />
+      <!-- <el-table-column prop="userId" label="用户ID" min-width="120" /> -->
       <el-table-column prop="userName" label="用户名" min-width="100" />
       <el-table-column prop="sessionId" label="会话ID" min-width="140" />
-      <el-table-column prop="pageUrl" label="页面URL" min-width="150">
-        <template #default="{ row }">
-          <el-text truncated>{{ row.pageUrl }}</el-text>
-        </template>
-      </el-table-column>
-      <el-table-column label="设备信息" min-width="140">
-        <template #default="{ row }">
-          <el-button type="primary" size="small" @click="showDeviceDetail(row)">
-            查看
-          </el-button>
-        </template>
-      </el-table-column>
       <el-table-column label="事件信息" min-width="140">
         <template #default="{ row }">
           <div class="event-cell">
@@ -100,6 +88,19 @@
           </div>
         </template>
       </el-table-column>
+      <el-table-column prop="pageUrl" label="页面URL" min-width="250">
+        <template #default="{ row }">
+          <el-text truncated>{{ row.pageUrl }}</el-text>
+        </template>
+      </el-table-column>
+      <!-- <el-table-column label="设备信息" min-width="140">
+        <template #default="{ row }">
+          <el-button type="primary" size="small" @click="showDeviceDetail(row)">
+            查看
+          </el-button>
+        </template>
+      </el-table-column> -->
+
       <el-table-column prop="event.eventTime" label="事件时间" width="180">
         <template #default="{ row }">
           {{ formatTimestamp(row.eventInfo.eventTime) }}
