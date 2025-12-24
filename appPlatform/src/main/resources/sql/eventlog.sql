@@ -7,7 +7,7 @@ create table if not exists app_event
     app_ver           varchar(255) not null COMMENT 'app版本',
     app_buildNum      varchar(255) not null COMMENT 'app构建号',
     user_id           varchar(255) not null COMMENT '用户ID',
-    user_name         varchar(255) not null COMMENT '用户名称',
+    user_name         varchar(255) COMMENT '用户名称',
     event_id          varchar(255) COMMENT '事件ID',
     event_type        varchar(50) COMMENT '事件类型(view/click/exposure)',
     event_time        datetime,
@@ -27,3 +27,8 @@ create table if not exists app_event
     status            tinyint DEFAULT 0 COMMENT '状态(0:正常, 1:测试)'
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT = '事件日志表';
+
+-- 修改 user_name 字段为可空
+ALTER TABLE app_event 
+MODIFY COLUMN user_name varchar(255) COMMENT '用户名称';
+
