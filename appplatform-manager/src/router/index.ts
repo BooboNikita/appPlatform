@@ -79,6 +79,17 @@ const routes: Array<RouteRecordRaw> = [
           href: "http://172.16.110.45:14808/",
         },
       },
+      {
+        path: "#",
+        name: "Graph",
+        component: () => import("@/views/app/LoginCode.vue"),
+        meta: {
+          title: "报表平台",
+          icon: "TrendCharts",
+          external: true,
+          href: "http://172.16.110.45:3000/",
+        },
+      },
     ],
   },
 ];
