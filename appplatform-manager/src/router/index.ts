@@ -87,7 +87,7 @@ const routes: Array<RouteRecordRaw> = [
           title: "报表平台",
           icon: "TrendCharts",
           external: true,
-          href: "http://172.16.110.45:3000/",
+          href: "http://172.16.110.45:3000/d/ad97cvd/appe7aea1-e79086-e5b9b3-e58fb0?orgId=1&from=now-24h&to=now&timezone=browser",
         },
       },
     ],
