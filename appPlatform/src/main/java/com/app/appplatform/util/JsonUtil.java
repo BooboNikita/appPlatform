@@ -176,4 +176,23 @@ public class JsonUtil {
             "对象转JSON(格式化)失败"
         );
     }
+
+    /**
+     * 压缩JSON字符串，去除空格、换行符等多余字符
+     *
+     * @param json JSON字符串
+     * @return 压缩后的JSON字符串，处理失败返回原字符串
+     */
+    public static String minify(String json) {
+        if (json == null || json.trim().isEmpty()) {
+            return json;
+        }
+        try {
+            Object obj = objectMapper.readValue(json, Object.class);
+            return objectMapper.writeValueAsString(obj);
+        } catch (Exception e) {
+            log.warn("JSON压缩失败，返回原内容: {}", e.getMessage());
+            return json;
+        }
+    }
 }

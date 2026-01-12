@@ -39,6 +39,12 @@ const routes: Array<RouteRecordRaw> = [
         meta: { title: "埋点数据", icon: "DataAnalysis" },
       },
       {
+        path: "/app/dynamic-config",
+        name: "DynamicConfig",
+        component: () => import("@/views/app/DynamicConfig.vue"),
+        meta: { title: "动态配置", icon: "Setting" },
+      },
+      {
         path: "/logs",
         name: "Logs",
         component: () => import("@/views/logs/List.vue"),

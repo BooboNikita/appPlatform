@@ -3,7 +3,8 @@ package com.app.appplatform.enums;
 public enum BucketType {
     DEFAULT("configfile"),
     LOGS("applogs"),
-    APPS("apps");
+    APPS("apps"),
+    DYNAMIC_CONFIG("dynamic-configs");
 
     private final String bucketName;
 
