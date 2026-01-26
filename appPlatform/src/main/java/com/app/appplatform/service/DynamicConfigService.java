@@ -39,5 +39,5 @@ public interface DynamicConfigService {
     /**
      * 获取配置文件的内容
      */
-    String getConfigContent(Long id) throws Exception;
+    Object getConfigContent(Long id, String env) throws Exception;
 }

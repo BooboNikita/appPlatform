@@ -60,14 +60,14 @@ public class DynamicConfigController {
     @Operation(summary = "根据版本获取最新配置内容", description = "根据客户端版本号和环境获取适用的一条最新动态配置文件的 JSON 内容")
     @GetMapping("/match")
     @PermitAll
-    public Result<String> getLatestConfigByVersion(
+    public Result<Object> getLatestConfigByVersion(
             @RequestParam String version,
             @RequestParam(value = "env", defaultValue = "prod") String env) throws Exception {
         DynamicConfig config = dynamicConfigService.getLatestConfigByVersion(version, env);
         if (config == null) {
             return Result.error(404, "未找到适用于该版本及环境的配置");
         }
-        String content = dynamicConfigService.getConfigContent(config.getId());
+        Object content = dynamicConfigService.getConfigContent(config.getId(), env);
         return Result.success("获取成功", content);
     }
 
@@ -80,8 +80,10 @@ public class DynamicConfigController {
 
     @Operation(summary = "获取配置文件内容", description = "根据 ID 直接读取并返回 MinIO 中的配置文件 JSON 内容")
     @GetMapping("/{id}/content")
-    public Result<String> getConfigContent(@PathVariable Long id) throws Exception {
-        String content = dynamicConfigService.getConfigContent(id);
+    public Result<Object> getConfigContent(
+            @PathVariable Long id,
+            @RequestParam(value = "env", defaultValue = "prod") String env) throws Exception {
+        Object content = dynamicConfigService.getConfigContent(id, env);
         return Result.success("获取成功", content);
     }
 }

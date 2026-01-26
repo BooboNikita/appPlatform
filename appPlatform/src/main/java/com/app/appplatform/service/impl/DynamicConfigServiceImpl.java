@@ -114,10 +114,10 @@ public class DynamicConfigServiceImpl implements DynamicConfigService {
     }
 
     @Override
-    public String getConfigContent(Long id) throws Exception {
-        DynamicConfig config = dynamicConfigMapper.findById(id);
+    public Object getConfigContent(Long id, String env) throws Exception {
+        DynamicConfig config = dynamicConfigMapper.findByIdAndEnv(id, env);
         if (config == null) {
-            throw new RuntimeException("配置不存在");
+            throw new RuntimeException("配置不存在或环境不匹配");
         }
 
         // 从 URL 中提取文件名
@@ -126,7 +126,8 @@ public class DynamicConfigServiceImpl implements DynamicConfigService {
         try (InputStream inputStream = minioService.downloadFile(fileName, BucketType.DYNAMIC_CONFIG);
              BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
             String fullContent = reader.lines().collect(Collectors.joining("\n"));
-            return JsonUtil.minify(fullContent);
+            String jsonContent = JsonUtil.minify(fullContent);
+            return JsonUtil.toObject(jsonContent, Object.class);
         }
     }
 }

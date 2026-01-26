@@ -19,7 +19,7 @@ export const getDynamicConfigList = () => {
 
 // 获取配置文件内容
 export const getDynamicConfigContent = (id: number) => {
-  return request.get<string>(`${prefix}/${id}/content`);
+  return request.get<any>(`${prefix}/${id}/content`);
 };
 
 // 更新动态配置（元数据或文件）
@@ -59,7 +59,7 @@ export const updateDynamicConfigContent = (
   content: string,
   versionRange: string,
   env: string,
-  remark: string
+  remark: string,
 ) => {
   const formData = new FormData();
   const blob = new Blob([content], { type: "application/json" });

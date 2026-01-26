@@ -217,7 +217,7 @@ const filteredConfigList = computed(() => {
   return configList.value.filter(
     (item) =>
       (item.remark && item.remark.toLowerCase().includes(query)) ||
-      (item.versionRange && item.versionRange.toLowerCase().includes(query))
+      (item.versionRange && item.versionRange.toLowerCase().includes(query)),
   );
 });
 
@@ -249,8 +249,9 @@ const handleSelect = async (item: DynamicConfig) => {
 
   try {
     const res = await getDynamicConfigContent(item.id);
-    try {
-      const fullJson = JSON.parse((res as any).data);
+    const fullJson = (res as any).data;
+
+    if (fullJson) {
       // 提取 env 和 configs
       if (fullJson.metadata) {
         editForm.value.env = fullJson.metadata.env || "production";
@@ -260,8 +261,6 @@ const handleSelect = async (item: DynamicConfig) => {
       } else {
         editForm.value.content = JSON.stringify(fullJson, null, 2);
       }
-    } catch (e) {
-      editForm.value.content = (res as any).data;
     }
   } catch (error) {
     ElMessage.error("获取配置内容失败");
@@ -299,7 +298,7 @@ const handleSave = async () => {
       JSON.stringify(fullJson, null, 2),
       editForm.value.versionRange,
       editForm.value.env,
-      editForm.value.remark
+      editForm.value.remark,
     );
     ElMessage.success("保存成功");
     fetchList();
@@ -323,7 +322,7 @@ const handleDelete = () => {
       confirmButtonText: "确定",
       cancelButtonText: "取消",
       type: "warning",
-    }
+    },
   ).then(async () => {
     try {
       await deleteDynamicConfig(selectedConfig.value!.id);

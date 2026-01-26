@@ -20,6 +20,14 @@ public interface DynamicConfigMapper {
     @Select("<script>" +
             "SELECT id, version_range as versionRange, file_url as fileUrl, env, remark, " +
             "create_time as createTime, update_time as updateTime FROM dynamic_config " +
+            "WHERE id = #{id} " +
+            "<if test='env != null'>AND env = #{env}</if>" +
+            "</script>")
+    DynamicConfig findByIdAndEnv(@Param("id") Long id, @Param("env") String env);
+
+    @Select("<script>" +
+            "SELECT id, version_range as versionRange, file_url as fileUrl, env, remark, " +
+            "create_time as createTime, update_time as updateTime FROM dynamic_config " +
             "<where>" +
             "  <if test='env != null'>AND env = #{env}</if>" +
             "</where>" +
