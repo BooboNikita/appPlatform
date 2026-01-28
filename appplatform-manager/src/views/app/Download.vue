@@ -18,7 +18,7 @@
                     <div class="app-details">
                       <span class="version">v{{ latestApp.version }}</span>
                       <span class="time">{{
-                        formatDate(latestApp.createTime)
+                        formatDate(latestApp.createTime, 8)
                       }}</span>
                     </div>
                   </div>
@@ -78,7 +78,7 @@
               </el-table-column>
               <el-table-column label="文件时间" width="180">
                 <template #default="{ row }">
-                  {{ formatDate(row.createTime) }}
+                  {{ formatDate(row.createTime, 8) }}
                 </template>
               </el-table-column>
             </el-table>
@@ -101,7 +101,7 @@
                     <div class="app-details">
                       <span class="version">v{{ latestBetaApp.version }}</span>
                       <span class="time">{{
-                        formatDate(latestBetaApp.createTime)
+                        formatDate(latestBetaApp.createTime, 8)
                       }}</span>
                     </div>
                   </div>
@@ -163,7 +163,7 @@
               </el-table-column>
               <el-table-column label="文件时间" width="180">
                 <template #default="{ row }">
-                  {{ formatDate(row.createTime) }}
+                  {{ formatDate(row.createTime, 8) }}
                 </template>
               </el-table-column>
             </el-table>
@@ -225,14 +225,14 @@ const fetchAppList = async () => {
       .sort((a: AppInfo, b: AppInfo) =>
         b.version.localeCompare(a.version, undefined, {
           numeric: true,
-        })
+        }),
       );
     const beta = allApps
       .filter((app: AppInfo) => app.isBeta)
       .sort((a: AppInfo, b: AppInfo) =>
         b.version.localeCompare(a.version, undefined, {
           numeric: true,
-        })
+        }),
       );
 
     appList.value = released;
@@ -256,7 +256,7 @@ const handleDownload = async (row: AppInfo) => {
       `${row.appName}_v${row.version}.apk`,
       (progress: number) => {
         downloadProgress[row.id] = progress;
-      }
+      },
     );
 
     ElMessage.success("下载成功");
