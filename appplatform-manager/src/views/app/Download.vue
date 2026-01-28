@@ -181,6 +181,7 @@ import { ElMessage } from "element-plus";
 import { Download } from "@element-plus/icons-vue";
 import { getAppList, downloadApp, cancelDownload } from "@/api/app";
 import { formatDate } from "@/utils/index";
+import logoUrl from "@/assets/logo.png";
 
 interface AppInfo {
   id: number;
@@ -281,7 +282,22 @@ const handleTabChange = () => {
   // 切换 Tab 时可以添加额外逻辑
 };
 
+/**
+ * 设置浏览器标签页图标
+ */
+const setFavicon = (url: string) => {
+  let link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+  if (!link) {
+    link = document.createElement("link");
+    link.type = "image/png";
+    link.rel = "shortcut icon";
+    document.getElementsByTagName("head")[0].appendChild(link);
+  }
+  link.href = url;
+};
+
 onMounted(() => {
+  setFavicon(logoUrl);
   fetchAppList();
 });
 </script>
