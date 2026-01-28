@@ -7,6 +7,7 @@
           ref="formRef"
           :rules="formRules"
           label-width="70px"
+          autocomplete="off"
         >
           <el-form-item label="用户名" prop="username">
             <el-autocomplete
@@ -17,6 +18,8 @@
               class="inline-input"
               @select="handleSelect"
               style="width: 100%"
+              name="new-username"
+              autocomplete="new-password"
             />
           </el-form-item>
           <el-form-item label="密码" prop="password">
@@ -26,6 +29,8 @@
               placeholder="请输入密码"
               show-password
               clearable
+              name="new-password"
+              autocomplete="new-password"
             />
           </el-form-item>
           <el-form-item>
