@@ -182,7 +182,7 @@ import {
   deleteDynamicConfig,
   type DynamicConfig,
 } from "@/api/dynamicConfig";
-import { da } from "element-plus/es/locale";
+import { formatDate } from "../../utils/index";
 
 // Codemirror 配置
 const extensions = [json(), oneDark];
@@ -220,12 +220,6 @@ const filteredConfigList = computed(() => {
       (item.versionRange && item.versionRange.toLowerCase().includes(query)),
   );
 });
-
-// 格式化日期
-const formatDate = (date: string) => {
-  if (!date) return "";
-  return moment.parseZone(date).format("YYYY-MM-DD HH:mm:ss");
-};
 
 // 获取列表
 const fetchList = async () => {

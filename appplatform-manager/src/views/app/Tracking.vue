@@ -295,6 +295,7 @@ import {
 } from "@/api/app_event";
 import { TrackingEvent } from "@/types/tracking";
 import { useUserStore } from "@/stores/user";
+import { formatTimestamp } from "../../utils/index";
 
 const loading = ref(false);
 const trackingList = ref<TrackingEvent[]>([]);
@@ -329,15 +330,6 @@ const createWebSocketWithAuth = (url: string, token: string): WebSocket => {
   const wsUrlWithToken = `${url}${separator}token=${encodeURIComponent(token)}`;
   const socket = new WebSocket(wsUrlWithToken);
   return socket;
-};
-
-/**
- * 格式化时间戳
- */
-const formatTimestamp = (timestamp: number): string => {
-  if (!timestamp) return "-";
-  const date = new Date(timestamp);
-  return date.toLocaleString();
 };
 
 /**
