@@ -2,7 +2,7 @@ package com.app.appplatform.service.impl;
 
 import com.app.appplatform.common.PageResult;
 import com.app.appplatform.entity.LogInfo;
-import com.app.appplatform.mapper.LogMapper;
+import com.app.appplatform.mapper.primary.LogMapper;
 import com.app.appplatform.service.LogService;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;

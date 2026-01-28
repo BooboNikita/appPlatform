@@ -1,4 +1,4 @@
-package com.app.appplatform.mapper;
+package com.app.appplatform.mapper.primary;
 
 import com.app.appplatform.entity.SysConfig;
 import org.apache.ibatis.annotations.*;

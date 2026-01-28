@@ -1,7 +1,7 @@
 package com.app.appplatform.service.impl;
 
 import com.app.appplatform.entity.User;
-import com.app.appplatform.mapper.UserMapper;
+import com.app.appplatform.mapper.primary.UserMapper;
 import com.app.appplatform.service.JwtUserDetailsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

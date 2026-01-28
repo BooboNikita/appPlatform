@@ -16,6 +16,7 @@ public class AppEvent {
     private Long id;
     private String userId;
     private String userName;
+    private String nickname; // 用户昵称
     private String sessionId;
     private String pageUrl;
     private String referrer;

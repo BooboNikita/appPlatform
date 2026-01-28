@@ -1,4 +1,4 @@
-package com.app.appplatform.mapper;
+package com.app.appplatform.mapper.primary;
 
 import com.app.appplatform.entity.User;
 import org.apache.ibatis.annotations.*;
@@ -7,11 +7,11 @@ import org.apache.ibatis.annotations.*;
 public interface UserMapper {
     @Select("SELECT * FROM user WHERE username = #{username}")
     @Results({
-            @Result(property = "id", column = "id"),
-            @Result(property = "username", column = "username"),
-            @Result(property = "password", column = "password"),  // 确保列名正确
-            @Result(property = "role", column = "role"),
-            @Result(property = "avatar", column = "avatar")
+        @Result(property = "id", column = "id"),
+        @Result(property = "username", column = "username"),
+        @Result(property = "password", column = "password"),  // 确保列名正确
+        @Result(property = "role", column = "role"),
+        @Result(property = "avatar", column = "avatar")
     })
     User findByUsername(String username);
 

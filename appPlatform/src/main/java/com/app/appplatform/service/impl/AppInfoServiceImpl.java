@@ -4,7 +4,7 @@ import com.app.appplatform.common.PageResult;
 import com.app.appplatform.dto.AppInfoDto;
 import com.app.appplatform.entity.AppInfo;
 import com.app.appplatform.enums.BucketType;
-import com.app.appplatform.mapper.AppInfoMapper;
+import com.app.appplatform.mapper.primary.AppInfoMapper;
 import com.app.appplatform.service.AppInfoService;
 import com.app.appplatform.service.MinioService;
 import com.github.pagehelper.PageHelper;

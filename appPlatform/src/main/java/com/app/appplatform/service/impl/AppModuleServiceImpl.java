@@ -2,7 +2,7 @@ package com.app.appplatform.service.impl;
 
 import com.app.appplatform.dto.AppModuleDto;
 import com.app.appplatform.entity.AppModule;
-import com.app.appplatform.mapper.AppModuleMapper;
+import com.app.appplatform.mapper.primary.AppModuleMapper;
 import com.app.appplatform.service.AppModuleService;
 import com.app.appplatform.util.JsonUtil;
 import org.apache.commons.logging.Log;

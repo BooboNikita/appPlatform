@@ -2,14 +2,6 @@
   <div class="tracking-list">
     <div class="filter-container">
       <el-form :inline="true" :model="queryParams" class="demo-form-inline">
-        <el-form-item label="用户ID">
-          <el-input
-            v-model="queryParams.userId"
-            placeholder="用户ID"
-            clearable
-            @keyup.enter="handleQuery"
-          />
-        </el-form-item>
         <el-form-item label="用户名">
           <el-input
             v-model="queryParams.userName"
@@ -18,10 +10,26 @@
             @keyup.enter="handleQuery"
           />
         </el-form-item>
+        <el-form-item label="昵称">
+          <el-input
+            v-model="queryParams.nickname"
+            placeholder="昵称"
+            clearable
+            @keyup.enter="handleQuery"
+          />
+        </el-form-item>
         <el-form-item label="页面URL">
           <el-input
             v-model="queryParams.pageUrl"
             placeholder="页面URL"
+            clearable
+            @keyup.enter="handleQuery"
+          />
+        </el-form-item>
+        <el-form-item label="事件ID">
+          <el-input
+            v-model="queryParams.eventId"
+            placeholder="事件ID"
             clearable
             @keyup.enter="handleQuery"
           />
@@ -35,7 +43,6 @@
             @change="handleQuery"
           >
             <el-option label="click" value="click" />
-            <el-option label="view" value="view" />
             <el-option label="exposure" value="exposure" />
           </el-select>
         </el-form-item>
@@ -79,6 +86,7 @@
       <el-table-column prop="id" label="ID" width="60" />
       <!-- <el-table-column prop="userId" label="用户ID" min-width="120" /> -->
       <el-table-column prop="userName" label="用户名" min-width="100" />
+      <el-table-column prop="nickname" label="昵称" min-width="100" />
       <el-table-column prop="sessionId" label="会话ID" min-width="140" />
       <el-table-column label="事件信息" min-width="140">
         <template #default="{ row }">
@@ -104,11 +112,6 @@
       <el-table-column prop="event.eventTime" label="事件时间" width="180">
         <template #default="{ row }">
           {{ formatTimestamp(row.eventInfo.eventTime) }}
-        </template>
-      </el-table-column>
-      <el-table-column prop="event.recvTime" label="接收时间" width="180">
-        <template #default="{ row }">
-          {{ formatTimestamp(row.eventInfo.recvTime) }}
         </template>
       </el-table-column>
       <el-table-column label="操作" width="100" fixed="right">
@@ -144,6 +147,9 @@
           </el-descriptions-item>
           <el-descriptions-item label="用户名">
             {{ selectedItem.userName }}
+          </el-descriptions-item>
+          <el-descriptions-item label="昵称">
+            {{ selectedItem.nickname || "-" }}
           </el-descriptions-item>
           <el-descriptions-item label="会话ID">
             {{ selectedItem.sessionId }}
@@ -306,8 +312,10 @@ const queryParams = reactive({
   pageSize: 10,
   userId: "",
   userName: "",
+  nickname: "",
   pageUrl: "",
   eventType: "",
+  eventId: "",
 });
 
 /**
@@ -387,7 +395,9 @@ const resetQuery = () => {
   queryParams.pageNum = 1;
   queryParams.userId = "";
   queryParams.userName = "";
+  queryParams.nickname = "";
   queryParams.pageUrl = "";
+  queryParams.eventId = "";
   queryParams.eventType = "";
   fetchTrackingList();
 };

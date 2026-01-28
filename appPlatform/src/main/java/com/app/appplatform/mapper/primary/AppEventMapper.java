@@ -1,4 +1,4 @@
-package com.app.appplatform.mapper;
+package com.app.appplatform.mapper.primary;
 
 import com.app.appplatform.entity.AppEvent;
 import org.apache.ibatis.annotations.*;
@@ -67,12 +67,14 @@ public interface AppEventMapper {
         "<where>",
         "   <if test='userId != null and userId != \"\"'> AND user_id LIKE CONCAT('%', #{userId}, '%') </if>",
         "   <if test='userName != null and userName != \"\"'> AND user_name LIKE CONCAT('%', #{userName}, '%') </if>",
+        "   <if test='eventId != null and eventId != \"\"'> AND event_id LIKE CONCAT('%', #{eventId}, '%') </if>",
         "   <if test='pageUrl != null and pageUrl != \"\"'> AND page_url LIKE CONCAT('%', #{pageUrl}, '%') </if>",
         "   <if test='eventType != null and eventType != \"\"'> AND event_type = #{eventType} </if>",
         "   <if test='filterKey != null and filterKey != \"\" and filterValue != null and filterValue != \"\"'> ",
         "       <choose>",
         "           <when test='filterKey == \"userId\"'> AND user_id LIKE CONCAT('%', #{filterValue}, '%') </when>",
         "           <when test='filterKey == \"userName\"'> AND user_name LIKE CONCAT('%', #{filterValue}, '%') </when>",
+        "           <when test='filterKey == \"eventId\"'> AND event_id LIKE CONCAT('%', #{filterValue}, '%') </when>",
         "           <when test='filterKey == \"pageUrl\"'> AND page_url LIKE CONCAT('%', #{filterValue}, '%') </when>",
         "           <when test='filterKey == \"eventType\"'> AND event_type = #{filterValue} </when>",
         "       </choose>",
@@ -111,6 +113,7 @@ public interface AppEventMapper {
     List<AppEvent> selectRecentEventsWithFilters(
             @Param("userId") String userId,
             @Param("userName") String userName,
+            @Param("eventId") String eventId,
             @Param("pageUrl") String pageUrl,
             @Param("eventType") String eventType,
             @Param("filterKey") String filterKey,

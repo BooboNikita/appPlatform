@@ -2,7 +2,7 @@ package com.app.appplatform.service.impl;
 
 import com.app.appplatform.entity.DynamicConfig;
 import com.app.appplatform.enums.BucketType;
-import com.app.appplatform.mapper.DynamicConfigMapper;
+import com.app.appplatform.mapper.primary.DynamicConfigMapper;
 import com.app.appplatform.service.DynamicConfigService;
 import com.app.appplatform.service.MinioService;
 import com.app.appplatform.util.JsonUtil;

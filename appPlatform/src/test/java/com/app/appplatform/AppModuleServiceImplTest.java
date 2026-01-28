@@ -2,7 +2,7 @@ package com.app.appplatform;
 
 import com.app.appplatform.dto.AppModuleDto;
 import com.app.appplatform.entity.AppModule;
-import com.app.appplatform.mapper.AppModuleMapper;
+import com.app.appplatform.mapper.primary.AppModuleMapper;
 import com.app.appplatform.service.AppModuleService;
 import com.app.appplatform.service.impl.AppModuleServiceImpl;
 import org.junit.jupiter.api.BeforeEach;

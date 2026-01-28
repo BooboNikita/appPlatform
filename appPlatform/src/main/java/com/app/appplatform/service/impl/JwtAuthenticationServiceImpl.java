@@ -2,7 +2,7 @@ package com.app.appplatform.service.impl;
 
 import com.app.appplatform.dto.UserInfoDto;
 import com.app.appplatform.entity.User;
-import com.app.appplatform.mapper.UserMapper;
+import com.app.appplatform.mapper.primary.UserMapper;
 import com.app.appplatform.model.JwtRequest;
 import com.app.appplatform.model.JwtResponse;
 import com.app.appplatform.model.RegisterRequest;

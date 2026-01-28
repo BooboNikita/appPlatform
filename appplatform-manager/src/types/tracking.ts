@@ -31,6 +31,7 @@ export interface TrackingEvent {
   id: number;
   userId: string;
   userName: string;
+  nickname?: string;
   sessionId: string;
   pageUrl: string;
   referrer: string;

@@ -82,6 +82,16 @@ public class AppEventController {
 
     /**
      * 获取最近的事件
+     * @param pageNum 页码
+     * @param pageSize 每页数量
+     * @param userId 用户ID（模糊查询）
+     * @param userName 用户名（模糊查询，优先级高于 nickname）
+     * @param nickname 用户昵称（模糊查询，仅在 userName 为空时使用）
+     * @param eventId 事件ID（模糊查询，对应 eventInfo.eventId）
+     * @param pageUrl 页面URL（模糊查询）
+     * @param eventType 事件类型（精确匹配）
+     * @param filterKey 过滤键
+     * @param filterValue 过滤值
      */
     @GetMapping("/recent")
     public Result<PageResult<AppEvent>> getRecentEvents(
@@ -89,10 +99,12 @@ public class AppEventController {
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(required = false) String userId,
             @RequestParam(required = false) String userName,
+            @RequestParam(required = false) String nickname,
+            @RequestParam(required = false) String eventId,
             @RequestParam(required = false) String pageUrl,
             @RequestParam(required = false) String eventType,
             @RequestParam(required = false) String filterKey,
             @RequestParam(required = false) String filterValue) {
-        return Result.success(appEventService.getRecentEvents(pageNum, pageSize, userId, userName, pageUrl, eventType, filterKey, filterValue));
+        return Result.success(appEventService.getRecentEvents(pageNum, pageSize, userId, userName, nickname, eventId, pageUrl, eventType, filterKey, filterValue));
     }
 }

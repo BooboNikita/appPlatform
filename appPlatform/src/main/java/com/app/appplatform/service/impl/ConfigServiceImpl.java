@@ -1,7 +1,7 @@
 package com.app.appplatform.service.impl;
 
 import com.app.appplatform.entity.SysConfig;
-import com.app.appplatform.mapper.SysConfigMapper;
+import com.app.appplatform.mapper.primary.SysConfigMapper;
 import com.app.appplatform.service.ConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
