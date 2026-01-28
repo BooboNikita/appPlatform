@@ -161,7 +161,7 @@
             {{ selectedItem.referrer }}
           </el-descriptions-item>
           <el-descriptions-item label="状态">
-            <el-tag :type="selectedItem.status === 1 ? 'success' : 'danger'">
+            <el-tag :type="selectedItem.status === 0 ? 'success' : 'danger'">
               {{ selectedItem.status === 0 ? "正常" : "测试" }}
             </el-tag>
           </el-descriptions-item>
