@@ -9,10 +9,14 @@
           label-width="70px"
         >
           <el-form-item label="用户名" prop="username">
-            <el-input
+            <el-autocomplete
               v-model="form.username"
+              :fetch-suggestions="querySearch"
               placeholder="手机号/账号"
               clearable
+              class="inline-input"
+              @select="handleSelect"
+              style="width: 100%"
             />
           </el-form-item>
           <el-form-item label="密码" prop="password">
@@ -61,10 +65,15 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive } from "vue";
+import { ref, reactive, onMounted } from "vue";
 import QRCode from "qrcode";
 import { ElMessage } from "element-plus";
 import { Picture } from "@element-plus/icons-vue";
+
+interface SavedAccount {
+  value: string;
+  password?: string;
+}
 
 const formRef = ref();
 const form = reactive({
@@ -81,9 +90,73 @@ const formRules = {
   password: [{ required: true, message: "请输入密码", trigger: "blur" }],
 };
 
+const savedAccounts = ref<SavedAccount[]>([]);
+const STORAGE_KEY = "login_code_history";
+
+onMounted(() => {
+  loadSavedAccounts();
+});
+
+const loadSavedAccounts = () => {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored) {
+    try {
+      savedAccounts.value = JSON.parse(stored);
+    } catch (e) {
+      console.error("Failed to parse saved accounts", e);
+      savedAccounts.value = [];
+    }
+  }
+};
+
+const saveAccount = () => {
+  const { username, password } = form;
+  if (!username || !password) return;
+
+  // Remove existing entry for this username
+  const index = savedAccounts.value.findIndex(
+    (item) => item.value === username,
+  );
+  if (index > -1) {
+    savedAccounts.value.splice(index, 1);
+  }
+
+  // Add to top
+  savedAccounts.value.unshift({ value: username, password });
+
+  // Limit history size (e.g., 20 items)
+  if (savedAccounts.value.length > 20) {
+    savedAccounts.value = savedAccounts.value.slice(0, 20);
+  }
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(savedAccounts.value));
+};
+
+const querySearch = (queryString: string, cb: any) => {
+  const results = queryString
+    ? savedAccounts.value.filter(createFilter(queryString))
+    : savedAccounts.value;
+  cb(results);
+};
+
+const createFilter = (queryString: string) => {
+  return (item: SavedAccount) => {
+    return item.value.toLowerCase().includes(queryString.toLowerCase());
+  };
+};
+
+const handleSelect = (item: Record<string, any>) => {
+  const account = item as SavedAccount;
+  form.username = account.value;
+  if (account.password) {
+    form.password = account.password;
+  }
+};
+
 const handleGenerateQrcode = async () => {
   try {
     await formRef.value.validate();
+    saveAccount(); // Save history on success
     const qrcodeData = { username: form.username, password: form.password };
     qrcodeBase64.dataUrl = await generateQrcode(qrcodeData);
   } catch (error) {
