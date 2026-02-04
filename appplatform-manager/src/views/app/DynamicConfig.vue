@@ -67,6 +67,9 @@
               >
             </div>
             <div class="header-actions">
+              <el-button type="info" plain @click="historyDrawerVisible = true"
+                >历史版本</el-button
+              >
               <el-button type="danger" plain @click="handleDelete"
                 >删除</el-button
               >
@@ -163,6 +166,30 @@
         >
       </template>
     </el-dialog>
+
+    <DiffConfirmDialog
+      v-model="diffConfirmVisible"
+      :title="diffConfirmTitle"
+      :meta-changes="diffConfirmMetaChanges"
+      :before-text="diffConfirmBeforeText"
+      :after-text="diffConfirmAfterText"
+      confirm-text="确认保存"
+      cancel-text="取消"
+      @confirm="handleDiffConfirm"
+      @cancel="handleDiffCancel"
+    />
+
+    <ConfigHistoryDrawer
+      v-model="historyDrawerVisible"
+      :config-id="selectedConfig?.id || null"
+      :current-content="editForm.content"
+      :current-metadata="{
+        versionRange: editForm.versionRange,
+        env: editForm.env,
+        remark: editForm.remark,
+      }"
+      @revert-success="handleRevertSuccess"
+    />
   </div>
 </template>
 
@@ -183,6 +210,8 @@ import {
   type DynamicConfig,
 } from "@/api/dynamicConfig";
 import { formatDate } from "../../utils/index";
+import DiffConfirmDialog from "@/components/DiffConfirmDialog.vue";
+import ConfigHistoryDrawer from "@/components/ConfigHistoryDrawer.vue";
 
 // Codemirror 配置
 const extensions = [json(), oneDark];
@@ -195,6 +224,7 @@ const loading = ref(false);
 const saving = ref(false);
 const creating = ref(false);
 const createDialogVisible = ref(false);
+const historyDrawerVisible = ref(false);
 
 const editForm = ref({
   versionRange: "",
@@ -202,6 +232,20 @@ const editForm = ref({
   env: "prod",
   content: "", // 这里的 content 只包含 configs 对象
 });
+
+const originalEditForm = ref({
+  versionRange: "",
+  remark: "",
+  env: "prod",
+  content: "",
+});
+
+const diffConfirmVisible = ref(false);
+const diffConfirmTitle = ref("确认保存");
+const diffConfirmMetaChanges = ref<string[]>([]);
+const diffConfirmBeforeText = ref("");
+const diffConfirmAfterText = ref("");
+let diffConfirmResolve: ((ok: boolean) => void) | null = null;
 
 const createForm = ref({
   versionRange: "*",
@@ -240,6 +284,13 @@ const handleSelect = async (item: DynamicConfig) => {
   editForm.value.versionRange = item.versionRange;
   editForm.value.env = item.env || "prod";
   editForm.value.remark = item.remark || "";
+  editForm.value.content = "";
+  originalEditForm.value = {
+    versionRange: editForm.value.versionRange,
+    remark: editForm.value.remark,
+    env: editForm.value.env,
+    content: editForm.value.content,
+  };
 
   try {
     const res = await getDynamicConfigContent(item.id);
@@ -256,8 +307,58 @@ const handleSelect = async (item: DynamicConfig) => {
         editForm.value.content = JSON.stringify(fullJson, null, 2);
       }
     }
+
+    originalEditForm.value = {
+      versionRange: editForm.value.versionRange,
+      remark: editForm.value.remark,
+      env: editForm.value.env,
+      content: editForm.value.content,
+    };
   } catch (error) {
     ElMessage.error("获取配置内容失败");
+  }
+};
+
+const normalizeJsonText = (text: string) => {
+  try {
+    return JSON.stringify(JSON.parse(text), null, 2);
+  } catch {
+    return text;
+  }
+};
+
+const requestDiffConfirm = (options: {
+  title?: string;
+  metaChanges?: string[];
+  beforeText: string;
+  afterText: string;
+}) => {
+  if (diffConfirmResolve) diffConfirmResolve(false);
+  diffConfirmTitle.value = options.title || "确认保存";
+  diffConfirmMetaChanges.value = options.metaChanges || [];
+  diffConfirmBeforeText.value = options.beforeText;
+  diffConfirmAfterText.value = options.afterText;
+  diffConfirmVisible.value = true;
+
+  return new Promise<boolean>((resolve) => {
+    diffConfirmResolve = resolve;
+  });
+};
+
+const handleDiffConfirm = () => {
+  if (diffConfirmResolve) diffConfirmResolve(true);
+  diffConfirmResolve = null;
+};
+
+const handleDiffCancel = () => {
+  if (diffConfirmResolve) diffConfirmResolve(false);
+  diffConfirmResolve = null;
+  diffConfirmVisible.value = false;
+};
+
+const handleRevertSuccess = () => {
+  if (selectedConfig.value) {
+    handleSelect(selectedConfig.value);
   }
 };
 
@@ -272,6 +373,40 @@ const handleSave = async () => {
       configsObj = JSON.parse(editForm.value.content);
     } catch (e) {
       return ElMessage.error("JSON 格式错误，请检查内容");
+    }
+
+    const originalNormalized = normalizeJsonText(
+      originalEditForm.value.content,
+    );
+    const currentNormalized = normalizeJsonText(editForm.value.content);
+
+    const metaChanges: string[] = [];
+    if (originalEditForm.value.versionRange !== editForm.value.versionRange) {
+      metaChanges.push(
+        `版本范围: ${originalEditForm.value.versionRange} -> ${editForm.value.versionRange}`,
+      );
+    }
+    if (originalEditForm.value.env !== editForm.value.env) {
+      metaChanges.push(
+        `环境: ${originalEditForm.value.env} -> ${editForm.value.env}`,
+      );
+    }
+    if (originalEditForm.value.remark !== editForm.value.remark) {
+      metaChanges.push(
+        `备注: ${originalEditForm.value.remark || "(空)"} -> ${
+          editForm.value.remark || "(空)"
+        }`,
+      );
+    }
+
+    if (originalNormalized !== currentNormalized || metaChanges.length > 0) {
+      const ok = await requestDiffConfirm({
+        title: "确认保存",
+        metaChanges,
+        beforeText: originalNormalized,
+        afterText: currentNormalized,
+      });
+      if (!ok) return;
     }
 
     // 构造完整 JSON
@@ -295,6 +430,12 @@ const handleSave = async () => {
       editForm.value.remark,
     );
     ElMessage.success("保存成功");
+    originalEditForm.value = {
+      versionRange: editForm.value.versionRange,
+      remark: editForm.value.remark,
+      env: editForm.value.env,
+      content: editForm.value.content,
+    };
     fetchList();
   } catch (error) {
     console.error("保存失败", error);

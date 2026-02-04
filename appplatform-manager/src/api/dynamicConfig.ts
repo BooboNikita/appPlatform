@@ -10,6 +10,17 @@ export interface DynamicConfig {
   updateTime: string;
 }
 
+export interface DynamicConfigHistory {
+  id: number;
+  configId: number;
+  versionRange: string;
+  env: string;
+  remark: string;
+  content?: string;
+  createTime: string;
+  creator?: string;
+}
+
 const prefix = "/api-dynamic-config";
 
 // 获取所有配置列表
@@ -45,15 +56,6 @@ export const deleteDynamicConfig = (id: number) => {
   return request.delete(`${prefix}/${id}`);
 };
 
-// 更新配置内容（直接提交 JSON 字符串，后端需要支持这个操作，或者前端构造 FormData）
-// 根据 Controller，updateConfig 接收 MultipartFile。
-// 如果用户在右侧编辑框修改了内容，我们需要将其包装成一个文件上传，或者后端需要一个接收字符串的接口。
-// 当前 Controller 只有:
-// @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-// public Result<DynamicConfig> updateConfig(...)
-// 其中 MultipartFile file 是可选的。
-// 如果只修改内容，我们需要把字符串转成 Blob 然后放入 FormData。
-
 export const updateDynamicConfigContent = (
   id: number,
   content: string,
@@ -68,4 +70,29 @@ export const updateDynamicConfigContent = (
   formData.append("env", env);
   formData.append("remark", remark);
   return updateDynamicConfig(id, formData);
+};
+
+// 获取配置历史列表
+export const getConfigHistory = (id: number) => {
+  return request.get<DynamicConfigHistory[]>(`${prefix}/${id}/history`);
+};
+
+// 获取所有历史列表
+export const getAllHistory = () => {
+  return request.get<DynamicConfigHistory[]>(`${prefix}/history/all`);
+};
+
+// 恢复到历史版本
+export const revertToHistory = (configId: number, historyId: number) => {
+  return request.post(`${prefix}/${configId}/revert/${historyId}`);
+};
+
+// 获取单个历史记录详情
+export const getHistoryById = (historyId: number) => {
+  return request.get<DynamicConfigHistory>(`${prefix}/history/${historyId}`);
+};
+
+// 获取历史记录内容
+export const getHistoryContent = (historyId: number) => {
+  return request.get<string>(`${prefix}/history/${historyId}/content`);
 };

@@ -2,6 +2,7 @@ package com.app.appplatform.controller;
 
 import com.app.appplatform.common.Result;
 import com.app.appplatform.entity.DynamicConfig;
+import com.app.appplatform.entity.DynamicConfigHistory;
 import com.app.appplatform.service.DynamicConfigService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -84,6 +85,51 @@ public class DynamicConfigController {
             @PathVariable Long id,
             @RequestParam(value = "env", defaultValue = "prod") String env) throws Exception {
         Object content = dynamicConfigService.getConfigContent(id, env);
+        return Result.success("获取成功", content);
+    }
+
+    // 历史版本相关接口
+
+    @Operation(summary = "获取配置历史版本列表", description = "获取指定配置的所有历史版本记录")
+    @GetMapping("/{id}/history")
+    public Result<List<DynamicConfigHistory>> getConfigHistory(@PathVariable Long id) {
+        List<DynamicConfigHistory> history = dynamicConfigService.getConfigHistory(id);
+        return Result.success("获取成功", history);
+    }
+
+    @Operation(summary = "获取所有历史版本", description = "获取所有配置的历史版本记录，支持按环境和版本范围筛选")
+    @GetMapping("/history/all")
+    public Result<List<DynamicConfigHistory>> getAllHistory(
+            @RequestParam(value = "env", required = false) String env,
+            @RequestParam(value = "versionRange", required = false) String versionRange) {
+        List<DynamicConfigHistory> history = dynamicConfigService.getAllHistory(env, versionRange);
+        return Result.success("获取成功", history);
+    }
+
+    @Operation(summary = "回溯到历史版本", description = "将指定配置回溯到某个历史版本")
+    @PostMapping("/{configId}/revert/{historyId}")
+    public Result<DynamicConfig> revertToHistory(
+            @PathVariable Long configId,
+            @PathVariable Long historyId,
+            @RequestParam(value = "operator", defaultValue = "system") String operator) throws Exception {
+        DynamicConfig config = dynamicConfigService.revertToHistory(configId, historyId, operator);
+        return Result.success("回溯成功", config);
+    }
+
+    @Operation(summary = "获取历史版本详情", description = "获取指定历史版本的详细信息")
+    @GetMapping("/history/{historyId}")
+    public Result<DynamicConfigHistory> getHistoryById(@PathVariable Long historyId) {
+        DynamicConfigHistory history = dynamicConfigService.getHistoryById(historyId);
+        if (history == null) {
+            return Result.error(404, "历史版本不存在");
+        }
+        return Result.success("获取成功", history);
+    }
+
+    @Operation(summary = "获取历史版本配置内容", description = "获取指定历史版本的配置文件内容")
+    @GetMapping("/history/{historyId}/content")
+    public Result<Object> getHistoryContent(@PathVariable Long historyId) throws Exception {
+        Object content = dynamicConfigService.getHistoryContent(historyId);
         return Result.success("获取成功", content);
     }
 }
