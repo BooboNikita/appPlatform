@@ -19,13 +19,17 @@
       </el-table-column>
       <el-table-column label="封面图" align="center">
         <template #default="scope">
-          <el-image
-            style="width: 100px; height: 100px"
-            :src="scope.row.coverImage"
-            :preview-src-list="[scope.row.coverImage]"
-            fit="cover"
-            v-if="scope.row.coverImage"
-          />
+          <div v-if="scope.row.coverImage">
+            <el-image
+              v-for="(img, idx) in splitImageUrls(scope.row.coverImage)"
+              :key="idx"
+              :src="img"
+              fit="cover"
+              :preview-src-list="splitImageUrls(scope.row.coverImage)"
+              style="width: 50px; height: 50px; margin-right: 8px"
+              :preview-teleported="true"
+            />
+          </div>
           <span v-else>无</span>
         </template>
       </el-table-column>
@@ -126,55 +130,6 @@ const fetchData = async () => {
   listLoading.value = true;
   try {
     const res = await getAllConfigs();
-    // Assuming the response structure handled by request.ts returns the data directly if success
-    // The request.ts interceptor returns res directly which is the body.
-    // However, the api definition return type might need adjustment depending on how request.ts transforms it.
-    // Based on request.ts: return res (which is response.data).
-    // And if res.code != 200, it rejects.
-    // So here res should be the data part if the API returns { code: 200, data: [...] }
-    // But wait, getAllConfigs return type in api.ts is request.get<any, PerformanceReview[]>
-    // Usually request.get<T, R> where R is the return type.
-    // Let's assume request.ts returns the `data` field of the JSON response if successful?
-    // Looking at request.ts: `return res;`. `res` is `response.data`.
-    // So if backend returns { code: 200, msg: "...", data: [...] }, `res` is that object.
-    // So `res.data` is the list.
-    // I need to check `getAllConfigs` implementation again.
-    // It returns `request.get<any, PerformanceReview[]>(...)`.
-    // If generic types are correct, res should be PerformanceReview[].
-    // BUT, usually axios wrapper returns the response wrapper.
-    // Let's check `request.ts` usage in `app.ts` again.
-    // `getAppList` returns `request.get<PageResult<AppInfo>>`.
-    // So the return type is the full response body or just the data?
-    // `request.ts` returns `res` (response.data).
-    // So if backend returns `Result<List<...>>`, then `res` is `Result`.
-    // So `res.data` is the list.
-    // My API definition: `request.get<any, PerformanceReview[]>` might be misleading if I expect `PerformanceReview[]` directly but it returns `Result`.
-    // Let's look at `app.ts` again: `return request.get<PageResult<AppInfo>>...`
-    // And `request.ts` returns `res`.
-    // So `res` matches `PageResult<AppInfo>`?
-    // Wait, `PageResult` interface has `list`, `total` etc.
-    // This matches the data structure of a successful response's data payload?
-    // The Java Result class usually has `code`, `msg`, `data`.
-    // If `request.ts` returns `response.data` (the whole JSON), then the return type of `request.get` should be the whole JSON structure.
-    // However, `app.ts` defines `PageResult` which looks like the `data` part of a Result, OR the Result itself?
-    // Let's check `app.ts` imports.
-    // It doesn't import a `Result` type.
-    // But `request.ts` checks `res.code !== 200`. This implies `res` HAS `code`.
-    // So `res` is the wrapper.
-    // So `getAppList` returning `PageResult` is suspicious unless `PageResult` extends the wrapper or `request.ts` unwraps it.
-    // `request.ts`: `return res;` (line 54).
-    // So it returns the wrapper.
-    // So my API types should probably be `Result<PerformanceReview[]>`.
-    // But I don't have `Result` type defined in frontend commonly?
-    // Let's look at `app.ts` again. `PageResult` has `list`, `total`.
-    // If `res` is the wrapper, `res.data` would be `PageResult`.
-    // So `getAppList` should probably return `Promise<Result<PageResult>>`.
-    // BUT `request.get` generic usually defines the resolve type.
-    // Let's just inspect `res` in runtime or assume standard `data` property access.
-    // I'll assume `res` has a `data` property which contains the list.
-    // I will cast it to any to be safe or define a Result interface.
-
-    // For now, I will assume res is the Result object.
     if ((res as any).data) {
       list.value = (res as any).data;
     } else {
@@ -230,15 +185,8 @@ const createData = async () => {
   if (!dataFormRef.value) return;
   await dataFormRef.value.validate(async (valid) => {
     if (valid) {
-      // Check if exists first? Or just try update/create
-      // The controller doesn't have create, so we use updateDeptConfig which is PUT.
-      // Usually PUT is idempotent and can create if ID is provided.
       try {
-        // First check if it exists to avoid overwriting? Or just proceed.
-        // User wants to "add".
         const exists = await existsByDeptId(temp.deptId);
-        // exists API returns Result<Boolean>.
-        // Based on my assumption about request.ts returning Result object.
         if ((exists as any).data === true) {
           ElMessage.error("该部门配置已存在");
           return;
@@ -276,6 +224,11 @@ const resetTemp = () => {
   temp.name = "";
   temp.coverImage = "";
   temp.deadline = "";
+};
+
+const splitImageUrls = (imageUrls: string) => {
+  if (!imageUrls) return [];
+  return imageUrls.split(",").map((url) => url.trim());
 };
 
 onMounted(() => {
