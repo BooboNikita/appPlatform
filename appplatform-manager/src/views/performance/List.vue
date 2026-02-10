@@ -12,6 +12,7 @@
       border
       fit
       highlight-current-row
+      row-class-name="custom-row-height"
     >
       <el-table-column label="部门ID" prop="deptId" align="center">
       </el-table-column>
@@ -26,7 +27,7 @@
               :src="img"
               fit="cover"
               :preview-src-list="splitImageUrls(scope.row.coverImage)"
-              style="width: 50px; height: 50px; margin-right: 8px"
+              style="width: 100px; height: 100px; margin-right: 8px"
               :preview-teleported="true"
             />
           </div>
@@ -242,5 +243,8 @@ onMounted(() => {
 }
 .filter-container {
   margin-bottom: 20px;
+}
+:deep(.custom-row-height .el-table__cell) {
+  padding: 20px 0;
 }
 </style>
