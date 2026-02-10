@@ -69,6 +69,12 @@ const routes: Array<RouteRecordRaw> = [
         meta: { title: "编辑模块", icon: "Edit", hiddenInMenu: true },
       },
       {
+        path: "/performance",
+        name: "PerformanceReview",
+        component: () => import("@/views/performance/List.vue"),
+        meta: { title: "绩效配置", icon: "Tickets" },
+      },
+      {
         path: "/app/loginCode",
         name: "loginCode",
         component: () => import("@/views/app/LoginCode.vue"),
