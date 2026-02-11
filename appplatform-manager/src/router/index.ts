@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
 import Layout from "@/views/layout/Index.vue";
-import { hi } from "element-plus/es/locale";
 
 const routes: Array<RouteRecordRaw> = [
   {

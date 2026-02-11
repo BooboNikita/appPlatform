@@ -1,6 +1,6 @@
 import request from "@/utils/request";
 
-const prefix = "/api/store-link-config";
+const prefix = "/store-link-config";
 
 export interface StoreLinkConfig {
   id: number;

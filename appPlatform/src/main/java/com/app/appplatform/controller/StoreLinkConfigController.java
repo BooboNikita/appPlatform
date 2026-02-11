@@ -13,7 +13,7 @@ import java.util.List;
  * 应用商店链接配置管理接口
  */
 @RestController
-@RequestMapping("/api/store-link-config")
+@RequestMapping("/store-link-config")
 public class StoreLinkConfigController {
     
     @Autowired
