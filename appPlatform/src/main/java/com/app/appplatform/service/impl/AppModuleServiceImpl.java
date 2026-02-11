@@ -4,6 +4,7 @@ import com.app.appplatform.dto.AppModuleDto;
 import com.app.appplatform.entity.AppModule;
 import com.app.appplatform.mapper.primary.AppModuleMapper;
 import com.app.appplatform.service.AppModuleService;
+import com.app.appplatform.util.DeviceUtil;
 import com.app.appplatform.util.JsonUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -37,19 +38,9 @@ public class AppModuleServiceImpl implements AppModuleService {
 
         boolean hideForTest = username.equals("apptest") || username.isEmpty();
 
-        String deviceInfo = headers.getFirst("deviceInfo");
-        String deviceBrand = null;
-        if (deviceInfo != null) {
-            try {
-                Map<String, Object> map = JsonUtil.toObject(deviceInfo, new TypeReference<Map<String, Object>>() {});
-                if (map != null) {
-                    deviceBrand = (String) map.get("brand");
-                }
-            } catch (Exception e) {
-                // 解析失败，可以记录日志
-                System.err.println("Failed to parse deviceInfo: " + e.getMessage());
-            }
-        }
+
+        String deviceBrand = DeviceUtil.parseDeviceBrand(headers.getFirst("deviceInfo"));
+
 
         logger.info("getActiveModules brand:" + deviceBrand + "hideForTest:" + hideForTest);
 

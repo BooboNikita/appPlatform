@@ -16,7 +16,9 @@ create table app_info
     createTime    TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
     downloadTimes int          not null,
     size          varchar(255) not null,
-    deleted       boolean      not null default false
+    deleted       boolean      not null default false,
+    showUpdatePopup boolean    not null default false,
+    forceUpdate   boolean      not null default false
 );
 
 ALTER TABLE app_info

@@ -12,3 +12,7 @@ CREATE TABLE IF NOT EXISTS sys_config (
 -- 初始化配置
 INSERT IGNORE INTO sys_config(config_key, config_value, remark)
 VALUES ('event_tracking_enabled', 'true', '是否开启埋点上报');
+
+-- 初始化配置
+INSERT IGNORE INTO sys_config(config_key, config_value, remark)
+VALUES ('app_update_total_enabled', 'true', '是否开启app更新提醒');

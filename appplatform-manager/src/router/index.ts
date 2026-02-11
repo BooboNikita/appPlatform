@@ -33,6 +33,12 @@ const routes: Array<RouteRecordRaw> = [
         meta: { title: "上传应用", icon: "Upload", hiddenInMenu: true },
       },
       {
+        path: "/app/store-link",
+        name: "StoreLinkConfig",
+        component: () => import("@/views/store-link/List.vue"),
+        meta: { title: "商店链接", icon: "Link" },
+      },
+      {
         path: "/app/tracking",
         name: "Tracking",
         component: () => import("@/views/app/Tracking.vue"),

@@ -18,4 +18,6 @@ public class AppInfo {
     private Integer downloadTimes; // 下载次数
     private String size;        // 文件大小
     private Boolean deleted = Boolean.FALSE;  // 是否已删除
+    private Boolean showUpdatePopup = Boolean.FALSE; // 是否显示更新弹窗
+    private Boolean forceUpdate = Boolean.FALSE; // 是否强制更新
 }

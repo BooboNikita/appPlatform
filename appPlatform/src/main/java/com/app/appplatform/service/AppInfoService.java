@@ -2,7 +2,9 @@ package com.app.appplatform.service;
 
 import com.app.appplatform.common.PageResult;
 import com.app.appplatform.dto.AppInfoDto;
+import com.app.appplatform.dto.AppVersionCheckDto;
 import com.app.appplatform.entity.AppInfo;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -93,4 +95,11 @@ public interface AppInfoService {
      * @return 如果存在返回 true，否则返回 false
      */
     boolean existsByPackageAndVersion(String packageName, String version);
+    
+    /**
+     * 检查应用版本更新
+     * @param headers HTTP请求头，包含appinfo和deviceInfo
+     * @return 版本检查结果
+     */
+    AppVersionCheckDto checkVersionUpdate(HttpHeaders headers);
 }

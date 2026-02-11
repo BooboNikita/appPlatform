@@ -48,4 +48,11 @@ public interface AppInfoMapper {
             @Param("version") String version,
             @Param("excludeId") Integer excludeId
     );
+    
+    /**
+     * 根据包名获取最新版本的应用信息
+     * @param packageName 包名
+     * @return 最新版本的应用信息
+     */
+    AppInfo findLatestVersionByPackage(@Param("packageName") String packageName);
 }

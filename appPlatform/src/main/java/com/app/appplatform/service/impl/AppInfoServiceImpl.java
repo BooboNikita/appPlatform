@@ -2,14 +2,23 @@ package com.app.appplatform.service.impl;
 
 import com.app.appplatform.common.PageResult;
 import com.app.appplatform.dto.AppInfoDto;
+import com.app.appplatform.dto.AppVersionCheckDto;
 import com.app.appplatform.entity.AppInfo;
+import com.app.appplatform.entity.StoreLinkConfig;
 import com.app.appplatform.enums.BucketType;
 import com.app.appplatform.mapper.primary.AppInfoMapper;
+import com.app.appplatform.mapper.primary.StoreLinkConfigMapper;
 import com.app.appplatform.service.AppInfoService;
+import com.app.appplatform.service.ConfigService;
 import com.app.appplatform.service.MinioService;
+import com.app.appplatform.util.AppInfoUtil;
+import com.app.appplatform.util.DeviceUtil;
+import com.app.appplatform.util.JsonUtil;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,9 +30,15 @@ import java.util.stream.Collectors;
 @Service
 public class AppInfoServiceImpl implements AppInfoService {
 
+    private static final String CONFIG_KEY_APP_UPDATE_TOTAL_ENABLED = "app_update_total_enabled";
+
     private final AppInfoMapper appInfoMapper;
 
     private final MinioService minioService;
+    
+    private final ConfigService configService;
+    
+    private final StoreLinkConfigMapper storeLinkConfigMapper;
 
     @Value("${app.upload.dir}/app")
     private String uploadDir;
@@ -31,9 +46,12 @@ public class AppInfoServiceImpl implements AppInfoService {
     @Value("${minio.bucket.apps}")
     private String appsBucketName;
 
-    public AppInfoServiceImpl(AppInfoMapper appInfoMapper, MinioService minioService) {
+    public AppInfoServiceImpl(AppInfoMapper appInfoMapper, MinioService minioService, ConfigService configService, 
+                              StoreLinkConfigMapper storeLinkConfigMapper) {
         this.appInfoMapper = appInfoMapper;
         this.minioService = minioService;
+        this.configService = configService;
+        this.storeLinkConfigMapper = storeLinkConfigMapper;
     }
 
     /**
@@ -196,6 +214,12 @@ public class AppInfoServiceImpl implements AppInfoService {
         if (appInfo.getIsBeta() != null) {
             existingApp.setIsBeta(appInfo.getIsBeta());
         }
+        if (appInfo.getShowUpdatePopup() != null) {
+            existingApp.setShowUpdatePopup(appInfo.getShowUpdatePopup());
+        }
+        if (appInfo.getForceUpdate() != null) {
+            existingApp.setForceUpdate(appInfo.getForceUpdate());
+        }
         
         // 更新记录
         appInfoMapper.updateAppInfo(existingApp);
@@ -222,5 +246,149 @@ public class AppInfoServiceImpl implements AppInfoService {
     @Override
     public boolean existsByPackageAndVersion(String packageName, String version) {
         return appInfoMapper.findByPackageAndVersion(packageName, version) != null;
+    }
+    
+    @Override
+    public AppVersionCheckDto checkVersionUpdate(HttpHeaders headers) {
+        // 检查APP更新总开关
+        if (!configService.getBooleanConfig(CONFIG_KEY_APP_UPDATE_TOTAL_ENABLED, true)) {
+            AppVersionCheckDto result = new AppVersionCheckDto();
+            result.setHasUpdate(false);
+            return result;
+        }
+        
+        // 从header获取应用信息
+        String appInfoHeader = headers.getFirst("appInfo");
+        String deviceInfoHeader = headers.getFirst("deviceInfo");
+
+        String currentVersion = AppInfoUtil.parseAppInfo(appInfoHeader).getVersion();
+        String packageName = "szyd";
+
+        // 获取最新版本信息
+        AppInfo latestApp = appInfoMapper.findLatestVersionByPackage(packageName);
+        if (latestApp == null) {
+            // 没有找到应用，返回无更新
+            AppVersionCheckDto result = new AppVersionCheckDto();
+            result.setHasUpdate(false);
+            return result;
+        }
+
+        // 检查该版本是否显示更新弹窗
+        if (!latestApp.getShowUpdatePopup()) {
+            // 如果该版本不显示弹窗，返回无更新
+            AppVersionCheckDto result = new AppVersionCheckDto();
+            result.setHasUpdate(false);
+            return result;
+        }
+
+        // 解析设备信息获取品牌
+        String deviceBrand = DeviceUtil.parseDeviceBrand(deviceInfoHeader);
+
+        // 版本比较
+        boolean hasUpdate = compareVersion(currentVersion, latestApp.getVersion()) < 0;
+
+        AppVersionCheckDto result = new AppVersionCheckDto();
+        result.setHasUpdate(hasUpdate);
+        
+        if (hasUpdate) {
+            result.setLatestVersion(latestApp.getVersion());
+            result.setLatestBuildNumber(latestApp.getBuildNumber());
+            result.setFeatures(latestApp.getFeatures());
+            result.setFileSize(latestApp.getSize());
+            
+            // 设置强制更新状态（从该版本的配置获取）
+            result.setForceUpdate(latestApp.getForceUpdate());
+            
+            // 生成对应厂商应用商店下载链接
+            String storeUrl = generateStoreUrl(packageName, deviceBrand);
+            result.setStoreUrl(storeUrl);
+            
+            // 设置通用下载链接
+            result.setDownloadUrl("https://app.ryyjdjg.cn/appPlatform/download");
+        }
+
+        return result;
+    }
+
+    /**
+     * 比较版本号
+     * @param version1 当前版本
+     * @param version2 最新版本
+     * @return -1: version1 < version2, 0: version1 = version2, 1: version1 > version2
+     */
+    private int compareVersion(String version1, String version2) {
+        if (version1 == null && version2 == null) return 0;
+        if (version1 == null) return -1;
+        if (version2 == null) return 1;
+        
+        String[] v1Parts = version1.split("\\.");
+        String[] v2Parts = version2.split("\\.");
+        
+        int maxLength = Math.max(v1Parts.length, v2Parts.length);
+        
+        for (int i = 0; i < maxLength; i++) {
+            int v1Part = i < v1Parts.length ? Integer.parseInt(v1Parts[i]) : 0;
+            int v2Part = i < v2Parts.length ? Integer.parseInt(v2Parts[i]) : 0;
+            
+            if (v1Part < v2Part) return -1;
+            if (v1Part > v2Part) return 1;
+        }
+        
+        return 0;
+    }
+
+    /**
+     * 根据设备品牌生成对应的应用商店下载链接
+     * @param packageName 应用包名
+     * @param deviceBrand 设备品牌
+     * @return 对应品牌的应用商店下载链接，无匹配品牌返回null
+     */
+    private String generateStoreUrl(String packageName, String deviceBrand) {
+        if (deviceBrand == null) {
+            return null;
+        }
+        
+        // 先查找对应品牌的配置
+        StoreLinkConfig config = storeLinkConfigMapper.findByDeviceBrand(deviceBrand.toLowerCase());
+        if (config != null && config.getEnabled() == 1) {
+            // 替换模板中的包名占位符
+            return config.getLinkTemplate().replace("{packageName}", packageName);
+        }
+        
+        // 如果没有找到对应品牌配置，查找默认配置
+        StoreLinkConfig defaultConfig = storeLinkConfigMapper.findDefaultConfig();
+        if (defaultConfig != null && defaultConfig.getEnabled() == 1) {
+            return defaultConfig.getLinkTemplate().replace("{packageName}", packageName);
+        }
+        
+        // 如果都没有找到，返回null
+        return null;
+    }
+
+    /**
+     * 生成各厂商应用商店下载链接（保留原方法以备其他地方使用）
+     * @param packageName 应用包名
+     * @param deviceBrand 设备品牌
+     * @return 各厂商商店下载链接Map
+     */
+    private Map<String, String> generateStoreUrls(String packageName, String deviceBrand) {
+        Map<String, String> storeUrls = new HashMap<>();
+        
+        // 小米应用商店
+        storeUrls.put("xiaomi", "market://details?id=" + packageName);
+        
+        // 华为应用商店
+        storeUrls.put("huawei", "appmarket://details?id=" + packageName);
+        
+        // 荣耀应用商店
+        storeUrls.put("honor", "honormarket://details?id=" + packageName);
+        
+        // OPPO应用商店
+        storeUrls.put("oppo", "market://details?id=" + packageName);
+        
+        // 通用market协议（会弹出所有应用商店供选择）
+        storeUrls.put("general", "market://details?id=" + packageName);
+        
+        return storeUrls;
     }
 }

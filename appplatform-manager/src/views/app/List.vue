@@ -57,12 +57,20 @@
           </el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="更新弹窗" width="100" align="center">
+        <template #default="{ row }">
+          <el-switch
+            v-model="row.showUpdatePopup"
+            @change="handlePopupControlChange(row)"
+          />
+        </template>
+      </el-table-column>
       <el-table-column prop="createTime" label="上传时间" width="180">
         <template #default="{ row }">
           {{ formatDate(row.createTime) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="400" fixed="right">
+      <el-table-column label="操作" width="280" fixed="right">
         <template #default="{ row }">
           <div class="operation-cell">
             <el-button
@@ -117,7 +125,13 @@ import { ref, reactive, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Plus } from "@element-plus/icons-vue";
-import { getAppList, deleteApp, downloadApp, cancelDownload } from "@/api/app";
+import {
+  getAppList,
+  deleteApp,
+  downloadApp,
+  cancelDownload,
+  setAppPopupControl,
+} from "@/api/app";
 import { formatDate } from "@/utils/index";
 
 interface AppInfo {
@@ -130,6 +144,8 @@ interface AppInfo {
   downloadTimes: number;
   isBeta: boolean;
   createTime: string;
+  showUpdatePopup?: boolean;
+  forceUpdate?: boolean;
 }
 
 const router = useRouter();
@@ -188,6 +204,22 @@ const handleCurrentChange = (val: number) => {
   fetchAppList();
 };
 
+// 切换弹窗控制
+const handlePopupControlChange = async (row: AppInfo) => {
+  try {
+    await setAppPopupControl(
+      row.id,
+      row.showUpdatePopup || false,
+      row.forceUpdate || false,
+    );
+    ElMessage.success("设置已更新");
+  } catch (error) {
+    row.showUpdatePopup = !row.showUpdatePopup; // 恢复原状态
+    console.error("设置失败:", error);
+    // ElMessage.error("设置失败"); // request interceptor might already show error
+  }
+};
+
 // 新增应用
 const handleCreate = () => {
   router.push("/app/upload");
@@ -213,7 +245,7 @@ const handleDownload = async (row: AppInfo) => {
       `${row.appName}_v${row.version}${row.isBeta ? "_beta" : ""}.apk`,
       (progress: number) => {
         downloadProgress[row.id] = progress;
-      }
+      },
     );
 
     // 更新下载次数

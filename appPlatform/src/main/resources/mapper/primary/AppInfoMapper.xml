@@ -92,6 +92,8 @@
             <if test="downloadTimes != null">downloadTimes = #{downloadTimes},</if>
             <if test="size != null">size = #{size},</if>
             <if test="deleted != null">deleted = #{deleted},</if>
+            <if test="showUpdatePopup != null">showUpdatePopup = #{showUpdatePopup},</if>
+            <if test="forceUpdate != null">forceUpdate = #{forceUpdate},</if>
         </set>
         WHERE id = #{id}
     </update>
@@ -115,5 +117,19 @@
         <if test="excludeId != null">
             AND id != #{excludeId}
         </if>
+    </select>
+    
+    <select id="findLatestVersionByPackage" resultMap="BaseResultMap">
+        SELECT * FROM app_info 
+        WHERE packageName = #{packageName} 
+        AND deleted = false 
+        AND isBeta = false
+        ORDER BY 
+            CAST(SUBSTRING_INDEX(version, '.', 1) AS UNSIGNED) DESC,
+            CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(version, '.', 2), '.', -1) AS UNSIGNED) DESC,
+            CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(version, '.', -2), '.', 1) AS UNSIGNED) DESC,
+            CAST(buildNumber AS UNSIGNED) DESC,
+            createTime DESC
+        LIMIT 1
     </select>
 </mapper>

@@ -18,6 +18,8 @@ export interface AppInfo {
   isBeta: boolean;
   createTime: string;
   features?: string;
+  showUpdatePopup?: boolean;
+  forceUpdate?: boolean;
 }
 
 // 分页参数
@@ -49,7 +51,7 @@ export const getAppById = (id: number) => {
 // 上传应用
 export const uploadApp = (
   data: FormData,
-  onUploadProgress?: (progressEvent: AxiosProgressEvent) => void
+  onUploadProgress?: (progressEvent: AxiosProgressEvent) => void,
 ) => {
   return request.post(`${prefix}/upload`, data, {
     headers: {
@@ -62,7 +64,7 @@ export const uploadApp = (
 export const updateApp = (
   id: number,
   data: FormData,
-  onUploadProgress?: (progressEvent: AxiosProgressEvent) => void
+  onUploadProgress?: (progressEvent: AxiosProgressEvent) => void,
 ) => {
   return request.put(`${prefix}/update/${id}`, data, {
     headers: {
@@ -81,7 +83,7 @@ export const deleteApp = (id: number) => {
 export const downloadApp = (
   id: number,
   fileName?: string,
-  onDownloadProgress?: (progress: number) => void
+  onDownloadProgress?: (progress: number) => void,
 ) => {
   // 创建新的取消令牌
   const source = axios.CancelToken.source();
@@ -96,7 +98,7 @@ export const downloadApp = (
         if (onDownloadProgress) {
           console.log("下载进度事件:", progressEvent);
           const progress = Math.round(
-            (progressEvent.loaded / (progressEvent.total || 1)) * 100
+            (progressEvent.loaded / (progressEvent.total || 1)) * 100,
           );
           onDownloadProgress(progress);
         }
@@ -129,4 +131,19 @@ export const cancelDownload = (id: number) => {
     source.cancel(`下载已取消`);
     downloadCancelTokens.delete(id);
   }
+};
+
+// 设置应用弹窗控制
+export const setAppPopupControl = (
+  id: number,
+  showUpdatePopup: boolean,
+  forceUpdate: boolean = false,
+) => {
+  const params = new URLSearchParams();
+  params.append("showUpdatePopup", showUpdatePopup.toString());
+  params.append("forceUpdate", forceUpdate.toString());
+
+  return request.post(`${prefix}/app/${id}/popup-control`, null, {
+    params: params,
+  });
 };

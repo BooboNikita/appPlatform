@@ -3,10 +3,14 @@ package com.app.appplatform.controller;
 import com.app.appplatform.common.PageResult;
 import com.app.appplatform.common.Result;
 import com.app.appplatform.dto.AppInfoDto;
+import com.app.appplatform.dto.AppVersionCheckDto;
 import com.app.appplatform.entity.AppInfo;
 import com.app.appplatform.enums.BucketType;
 import com.app.appplatform.service.AppInfoService;
+import com.app.appplatform.service.ConfigService;
 import com.app.appplatform.util.FileDownloadUtil;
+import com.app.appplatform.util.JsonUtil;
+import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -15,20 +19,27 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api-app")
 public class AppInfoController {
 
+    private static final String CONFIG_KEY_APP_UPDATE_TOTAL_ENABLED = "app_update_total_enabled";
+
     private final AppInfoService appInfoService;
 
     private final FileDownloadUtil fileDownloadUtil;
+    
+    private final ConfigService configService;
 
     @Autowired
-    public AppInfoController(AppInfoService appInfoService, FileDownloadUtil fileDownloadUtil) {
+    public AppInfoController(AppInfoService appInfoService, FileDownloadUtil fileDownloadUtil, ConfigService configService) {
         this.appInfoService = appInfoService;
         this.fileDownloadUtil = fileDownloadUtil;
+        this.configService = configService;
     }
 
     /**
@@ -204,5 +215,101 @@ public class AppInfoController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Result.error(500, "删除应用失败: " + e.getMessage()));
         }
+    }
+
+    /**
+     * 检查应用版本更新
+     * @param headers HTTP请求头，包含appinfo和deviceInfo
+     * @return 版本检查结果
+     */
+    @PermitAll
+    @PostMapping("/check-version")
+    public Result<AppVersionCheckDto> checkVersionUpdate(@RequestHeader HttpHeaders headers) {
+        try {
+            AppVersionCheckDto result = appInfoService.checkVersionUpdate(headers);
+            return Result.success(result);
+        } catch (IllegalArgumentException e) {
+            return Result.error(400, e.getMessage());
+        } catch (Exception e) {
+            return Result.error(500, "版本检查失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 设置应用版本的弹窗控制
+     * @param id 应用ID
+     * @param showUpdatePopup 是否显示更新弹窗
+     * @param forceUpdate 是否强制更新
+     * @return 操作结果
+     */
+    @PostMapping("/app/{id}/popup-control")
+    public Result<?> setAppPopupControl(
+            @PathVariable Integer id,
+            @RequestParam boolean showUpdatePopup,
+            @RequestParam(defaultValue = "false") boolean forceUpdate) {
+        try {
+            AppInfo appInfo = appInfoService.getAppById(id);
+            if (appInfo == null) {
+                return Result.error(404, "应用不存在");
+            }
+            
+            // 更新弹窗控制设置
+            appInfo.setShowUpdatePopup(showUpdatePopup);
+            appInfo.setForceUpdate(forceUpdate);
+            
+            AppInfo updatedApp = appInfoService.updateAppInfo(appInfo);
+            return Result.success("弹窗控制设置已更新", updatedApp);
+        } catch (Exception e) {
+            return Result.error(500, "设置弹窗控制失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取应用版本的弹窗控制状态
+     * @param id 应用ID
+     * @return 弹窗控制状态
+     */
+    @GetMapping("/app/{id}/popup-control")
+    public Result<Map<String, Object>> getAppPopupControl(@PathVariable Integer id) {
+        try {
+            AppInfo appInfo = appInfoService.getAppById(id);
+            if (appInfo == null) {
+                return Result.error(404, "应用不存在");
+            }
+            
+            Map<String, Object> status = Map.of(
+                "id", appInfo.getId(),
+                "appName", appInfo.getAppName(),
+                "version", appInfo.getVersion(),
+                "showUpdatePopup", appInfo.getShowUpdatePopup(),
+                "forceUpdate", appInfo.getForceUpdate()
+            );
+            return Result.success(status);
+        } catch (Exception e) {
+            return Result.error(500, "获取弹窗控制状态失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取APP更新总开关状态
+     * @return 当前APP更新总开关状态
+     */
+    @PermitAll
+    @GetMapping("/update-total/status")
+    public Result<Map<String, Boolean>> getUpdateTotalStatus() {
+        boolean isEnabled = configService.getBooleanConfig(CONFIG_KEY_APP_UPDATE_TOTAL_ENABLED, true);
+        return Result.success(Map.of("appUpdateTotalEnabled", isEnabled));
+    }
+
+    /**
+     * 设置APP更新总开关状态
+     * @param enabled 是否开启APP更新
+     * @return 操作结果
+     */
+    @PermitAll
+    @PostMapping("/update-total/set-status")
+    public Result<?> setUpdateTotalStatus(@RequestParam boolean enabled) {
+        configService.updateConfig(CONFIG_KEY_APP_UPDATE_TOTAL_ENABLED, String.valueOf(enabled));
+        return Result.success("APP更新已" + (enabled ? "开启" : "关闭"));
     }
 }
