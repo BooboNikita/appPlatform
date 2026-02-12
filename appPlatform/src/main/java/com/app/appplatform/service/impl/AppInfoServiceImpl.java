@@ -369,31 +369,4 @@ public class AppInfoServiceImpl implements AppInfoService {
         // 如果都没有找到，返回null
         return null;
     }
-
-    /**
-     * 生成各厂商应用商店下载链接（保留原方法以备其他地方使用）
-     * @param packageName 应用包名
-     * @param deviceBrand 设备品牌
-     * @return 各厂商商店下载链接Map
-     */
-    private Map<String, String> generateStoreUrls(String packageName, String deviceBrand) {
-        Map<String, String> storeUrls = new HashMap<>();
-        
-        // 小米应用商店
-        storeUrls.put("xiaomi", "market://details?id=" + packageName);
-        
-        // 华为应用商店
-        storeUrls.put("huawei", "appmarket://details?id=" + packageName);
-        
-        // 荣耀应用商店
-        storeUrls.put("honor", "honormarket://details?id=" + packageName);
-        
-        // OPPO应用商店
-        storeUrls.put("oppo", "market://details?id=" + packageName);
-        
-        // 通用market协议（会弹出所有应用商店供选择）
-        storeUrls.put("general", "market://details?id=" + packageName);
-        
-        return storeUrls;
-    }
 }
