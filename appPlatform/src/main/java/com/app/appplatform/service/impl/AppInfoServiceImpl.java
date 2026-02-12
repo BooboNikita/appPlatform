@@ -13,8 +13,6 @@ import com.app.appplatform.service.ConfigService;
 import com.app.appplatform.service.MinioService;
 import com.app.appplatform.util.AppInfoUtil;
 import com.app.appplatform.util.DeviceUtil;
-import com.app.appplatform.util.JsonUtil;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,6 +43,15 @@ public class AppInfoServiceImpl implements AppInfoService {
 
     @Value("${minio.bucket.apps}")
     private String appsBucketName;
+
+    @Value("${app.package-name}")
+    private String appPackageName;
+
+    @Value("${app.download-url}")
+    private String appDownloadUrl;
+
+    @Value("${app.store-package}")
+    private String storePackage;
 
     public AppInfoServiceImpl(AppInfoMapper appInfoMapper, MinioService minioService, ConfigService configService, 
                               StoreLinkConfigMapper storeLinkConfigMapper) {
@@ -262,10 +269,9 @@ public class AppInfoServiceImpl implements AppInfoService {
         String deviceInfoHeader = headers.getFirst("deviceInfo");
 
         String currentVersion = AppInfoUtil.parseAppInfo(appInfoHeader).getVersion();
-        String packageName = "szyd";
 
         // 获取最新版本信息
-        AppInfo latestApp = appInfoMapper.findLatestVersionByPackage(packageName);
+        AppInfo latestApp = appInfoMapper.findLatestVersionByPackage(appPackageName);
         if (latestApp == null) {
             // 没有找到应用，返回无更新
             AppVersionCheckDto result = new AppVersionCheckDto();
@@ -300,11 +306,11 @@ public class AppInfoServiceImpl implements AppInfoService {
             result.setForceUpdate(latestApp.getForceUpdate());
             
             // 生成对应厂商应用商店下载链接
-            String storeUrl = generateStoreUrl(packageName, deviceBrand);
+            String storeUrl = generateStoreUrl(appPackageName, deviceBrand);
             result.setStoreUrl(storeUrl);
             
             // 设置通用下载链接
-            result.setDownloadUrl("https://app.ryyjdjg.cn/appPlatform/download");
+            result.setDownloadUrl(appDownloadUrl);
         }
 
         return result;
@@ -348,17 +354,16 @@ public class AppInfoServiceImpl implements AppInfoService {
             return null;
         }
         
-        // 先查找对应品牌的配置
-        StoreLinkConfig config = storeLinkConfigMapper.findByDeviceBrand(deviceBrand.toLowerCase());
+        // 先查找对应品牌的配置（支持别名匹配）
+        StoreLinkConfig config = storeLinkConfigMapper.findByDeviceBrandOrAlias(deviceBrand.toLowerCase());
         if (config != null && config.getEnabled() == 1) {
-            // 替换模板中的包名占位符
-            return config.getLinkTemplate().replace("{packageName}", packageName);
+            return config.getLinkTemplate().replace("{packageName}", storePackage);
         }
-        
-        // 如果没有找到对应品牌配置，查找默认配置
+
+        // 如果没找到对应品牌配置或者配置不可用，使用默认配置
         StoreLinkConfig defaultConfig = storeLinkConfigMapper.findDefaultConfig();
         if (defaultConfig != null && defaultConfig.getEnabled() == 1) {
-            return defaultConfig.getLinkTemplate().replace("{packageName}", packageName);
+            return defaultConfig.getLinkTemplate().replace("{packageName}", storePackage);
         }
         
         // 如果都没有找到，返回null

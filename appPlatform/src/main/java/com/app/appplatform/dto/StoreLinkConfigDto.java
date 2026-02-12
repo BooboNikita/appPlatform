@@ -23,6 +23,11 @@ public class StoreLinkConfigDto {
     private String deviceBrand;
     
     /**
+     * 品牌别名（多个别名用逗号分隔，如：redmi,mi,小米）
+     */
+    private String brandAliases;
+    
+    /**
      * 应用商店链接模板
      */
     @NotBlank(message = "链接模板不能为空")

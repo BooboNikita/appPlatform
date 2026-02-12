@@ -18,6 +18,7 @@
 
     <el-table v-loading="loading" :data="configList" border style="width: 100%">
       <el-table-column prop="deviceBrand" label="设备品牌" width="150" />
+      <el-table-column prop="brandAliases" label="品牌别名" width="200" />
       <el-table-column
         prop="linkTemplate"
         label="应用商店链接模板"
@@ -51,6 +52,12 @@
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="设备品牌" prop="deviceBrand">
           <el-input v-model="form.deviceBrand" placeholder="例如：xiaomi" />
+        </el-form-item>
+        <el-form-item label="品牌别名" prop="brandAliases">
+          <el-input
+            v-model="form.brandAliases"
+            placeholder="多个用逗号分隔，例如：honor,荣耀"
+          />
         </el-form-item>
         <el-form-item label="链接模板" prop="linkTemplate">
           <el-input
@@ -110,6 +117,7 @@ const formRef = ref();
 
 const form = reactive<StoreLinkConfigDto>({
   deviceBrand: "",
+  brandAliases: "",
   linkTemplate: "",
   enabled: 1,
   sortOrder: 0,
@@ -177,6 +185,7 @@ const handleAdd = () => {
   dialogTitle.value = "新增配置";
   currentId.value = null;
   form.deviceBrand = "";
+  form.brandAliases = "";
   form.linkTemplate = "";
   form.enabled = 1;
   form.sortOrder = 0;
@@ -189,6 +198,7 @@ const handleEdit = (row: StoreLinkConfig) => {
   dialogTitle.value = "编辑配置";
   currentId.value = row.id;
   form.deviceBrand = row.deviceBrand;
+  form.brandAliases = row.brandAliases || "";
   form.linkTemplate = row.linkTemplate;
   form.enabled = row.enabled;
   form.sortOrder = row.sortOrder;

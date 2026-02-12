@@ -5,6 +5,7 @@ const prefix = "/store-link-config";
 export interface StoreLinkConfig {
   id: number;
   deviceBrand: string;
+  brandAliases?: string;
   linkTemplate: string;
   enabled: number; // 1 for enabled, 0 for disabled
   sortOrder: number;
@@ -15,6 +16,7 @@ export interface StoreLinkConfig {
 
 export interface StoreLinkConfigDto {
   deviceBrand: string;
+  brandAliases?: string;
   linkTemplate: string;
   enabled: number;
   sortOrder: number;

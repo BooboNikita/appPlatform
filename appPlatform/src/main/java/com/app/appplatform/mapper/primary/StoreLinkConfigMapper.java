@@ -26,6 +26,13 @@ public interface StoreLinkConfigMapper {
     StoreLinkConfig findByDeviceBrand(@Param("deviceBrand") String deviceBrand);
     
     /**
+     * 根据设备品牌或别名查询配置
+     * @param deviceBrand 设备品牌
+     * @return 配置信息
+     */
+    StoreLinkConfig findByDeviceBrandOrAlias(@Param("deviceBrand") String deviceBrand);
+    
+    /**
      * 查询默认配置
      * @return 默认配置
      */

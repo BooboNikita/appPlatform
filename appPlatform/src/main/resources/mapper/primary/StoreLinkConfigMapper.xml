@@ -5,6 +5,7 @@
     <resultMap id="BaseResultMap" type="com.app.appplatform.entity.StoreLinkConfig">
         <id column="id" property="id" jdbcType="BIGINT"/>
         <result column="device_brand" property="deviceBrand" jdbcType="VARCHAR"/>
+        <result column="brand_aliases" property="brandAliases" jdbcType="VARCHAR"/>
         <result column="link_template" property="linkTemplate" jdbcType="VARCHAR"/>
         <result column="enabled" property="enabled" jdbcType="TINYINT"/>
         <result column="sort_order" property="sortOrder" jdbcType="INTEGER"/>
@@ -14,7 +15,7 @@
     </resultMap>
     
     <sql id="Base_Column_List">
-        id, device_brand, link_template, enabled, sort_order, remark, create_time, update_time
+        id, device_brand, brand_aliases, link_template, enabled, sort_order, remark, create_time, update_time
     </sql>
     
     <!-- 查询所有启用的配置 -->
@@ -36,6 +37,26 @@
         LIMIT 1
     </select>
     
+    <!-- 根据设备品牌或别名查询配置 -->
+    <select id="findByDeviceBrandOrAlias" resultMap="BaseResultMap" parameterType="java.lang.String">
+        SELECT 
+        <include refid="Base_Column_List" />
+        FROM store_link_config
+        WHERE enabled = 1
+        AND (
+            device_brand = #{deviceBrand,jdbcType=VARCHAR}
+            OR (
+                brand_aliases IS NOT NULL 
+                AND brand_aliases != '' 
+                AND FIND_IN_SET(#{deviceBrand,jdbcType=VARCHAR}, brand_aliases) > 0
+            )
+        )
+        ORDER BY 
+            CASE WHEN device_brand = #{deviceBrand,jdbcType=VARCHAR} THEN 1 ELSE 2 END,
+            sort_order ASC
+        LIMIT 1
+    </select>
+    
     <!-- 查询默认配置 -->
     <select id="findDefaultConfig" resultMap="BaseResultMap">
         SELECT 
@@ -49,9 +70,10 @@
     <!-- 插入配置 -->
     <insert id="insert" parameterType="com.app.appplatform.entity.StoreLinkConfig" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO store_link_config (
-            device_brand, link_template, enabled, sort_order, remark, create_time, update_time
+            device_brand, brand_aliases, link_template, enabled, sort_order, remark, create_time, update_time
         ) VALUES (
             #{deviceBrand,jdbcType=VARCHAR},
+            #{brandAliases,jdbcType=VARCHAR},
             #{linkTemplate,jdbcType=VARCHAR},
             #{enabled,jdbcType=TINYINT},
             #{sortOrder,jdbcType=INTEGER},
@@ -66,6 +88,7 @@
         UPDATE store_link_config
         SET 
             device_brand = #{deviceBrand,jdbcType=VARCHAR},
+            brand_aliases = #{brandAliases,jdbcType=VARCHAR},
             link_template = #{linkTemplate,jdbcType=VARCHAR},
             enabled = #{enabled,jdbcType=TINYINT},
             sort_order = #{sortOrder,jdbcType=INTEGER},
