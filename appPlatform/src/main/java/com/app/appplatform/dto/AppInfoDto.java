@@ -16,4 +16,6 @@ public class AppInfoDto {
     private Date createTime;    // 创建时间
     private Integer downloadTimes; // 下载次数
     private String size;        // 文件大小
+    private Boolean showUpdatePopup; // 更新弹窗
+    private Boolean forceUpdate; // 强制更新
 }

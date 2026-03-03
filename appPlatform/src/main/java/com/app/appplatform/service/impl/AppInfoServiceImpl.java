@@ -82,6 +82,8 @@ public class AppInfoServiceImpl implements AppInfoService {
         dto.setCreateTime(appInfo.getCreateTime());
         dto.setDownloadTimes(appInfo.getDownloadTimes());
         dto.setSize(appInfo.getSize());
+        dto.setShowUpdatePopup(appInfo.getShowUpdatePopup());
+        dto.setForceUpdate(appInfo.getForceUpdate());
         
         return dto;
     }
