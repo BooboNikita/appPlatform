@@ -55,12 +55,12 @@
         </el-table-column>
         <el-table-column prop="requestTime" label="请求时间" width="auto">
           <template #default="{ row }">{{
-            formatDate(row.requestTime)
+            formatDate(row.requestTime, 8)
           }}</template>
         </el-table-column>
         <el-table-column prop="expireTime" label="过期时间" width="auto">
           <template #default="{ row }">{{
-            formatDate(row.expireTime)
+            formatDate(row.expireTime, 8)
           }}</template>
         </el-table-column>
         <el-table-column label="操作" width="100" fixed="right">
