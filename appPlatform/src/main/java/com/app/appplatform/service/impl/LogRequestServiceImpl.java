@@ -89,8 +89,8 @@ public class LogRequestServiceImpl implements LogRequestService {
             String status = redisTemplate.opsForValue().get(redisKey);
 
             // 如果Redis中没有该key，说明已过期
-            if (status == null) {
-                // 更新数据库状态为已过期
+            if (status == null && logRequest.getStatus() == 0) {
+                // 只更新待上传状态的记录为已过期
                 logRequestMapper.updateStatus(logRequest.getId(), 2);
                 return null;
             }
