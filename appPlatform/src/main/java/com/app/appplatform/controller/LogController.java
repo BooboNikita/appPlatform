@@ -22,7 +22,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api-logs")
@@ -200,19 +202,21 @@ public class LogController {
     /**
      * App查询日志请求
      * 检查是否有需要上传的日志请求，如有则说明App需要主动上传日志
-     * 多次请求也只上传一次，只返回是否有待上传请求（布尔值）
+     * 多次请求也只上传一次，返回{request: bool}格式
      */
     @PermitAll()
     @GetMapping(value = "/request/check", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Result<Boolean>> checkLogRequest(
+    public ResponseEntity<Result<Map<String, Boolean>>> checkLogRequest(
             @RequestParam String username) {
         try {
             // 查询是否有待上传的日志请求
             LogRequest pendingRequest = logRequestService.getPendingLogRequest(username);
             boolean hasPendingRequest = pendingRequest != null;
+            Map<String, Boolean> result = new HashMap<>();
+            result.put("request", hasPendingRequest);
             return ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(Result.success(hasPendingRequest));
+                    .body(Result.success(result));
         } catch (Exception e) {
             logger.error("查询日志请求失败", e);
             return ResponseEntity.ok()
