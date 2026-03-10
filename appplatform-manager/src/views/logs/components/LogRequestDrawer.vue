@@ -142,7 +142,9 @@ const handleDelete = async (id: number) => {
   }
 };
 
-const getStatusType = (status: number) => {
+const getStatusType = (
+  status: number,
+): "info" | "success" | "danger" | "primary" => {
   switch (status) {
     case 0:
       return "info";
@@ -151,7 +153,7 @@ const getStatusType = (status: number) => {
     case 2:
       return "danger";
     default:
-      return "";
+      return "info";
   }
 };
 
