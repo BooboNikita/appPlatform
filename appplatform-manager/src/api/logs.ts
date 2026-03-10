@@ -6,10 +6,18 @@ export interface LogItem {
   nickname?: string;
   uploadtime: string; // ISO string
   path: string; // comma separated file urls
-  appname: string;
+  appName: string; // changed from appname to appName (based on List.vue usage)
   version: string;
-  imageUrl: string;
+  imageUrls: string; // changed from imageUrl to imageUrls (based on List.vue usage)
   problem: string;
+}
+
+export interface LogRequest {
+  id: number;
+  username: string;
+  status: number; // 0: pending, 1: uploaded, 2: timeout
+  requestTime: string;
+  expireTime: string;
 }
 
 interface PageParams {
@@ -19,6 +27,8 @@ interface PageParams {
   endDate?: string;
   appName?: string;
   username?: string;
+  hasRequest?: boolean; // new filter
+  requestDate?: string; // new filter
 }
 
 interface PageResult<T> {
@@ -45,4 +55,29 @@ export const getLogFileContent = (path: string) => {
   return request.post(`${prefix}/file`, null, {
     params: { filePath: path },
   });
+};
+
+export const createLogRequest = (username: string, timeoutMinutes?: number) => {
+  return request.post<LogRequest>(`${prefix}/request`, null, {
+    params: { username, timeoutMinutes },
+  });
+};
+
+export const checkLogRequest = (username: string) => {
+  return request.get<boolean>(`${prefix}/request/check`, {
+    params: { username },
+  });
+};
+
+export const getLogRequestList = (params: {
+  username?: string;
+  status?: number;
+  startDate?: string;
+  endDate?: string;
+}) => {
+  return request.get<LogRequest[]>(`${prefix}/request/list`, { params });
+};
+
+export const deleteLogRequest = (id: number) => {
+  return request.delete<void>(`${prefix}/request/${id}`);
 };

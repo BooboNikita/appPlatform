@@ -3,10 +3,10 @@
     <div class="filter-bar">
       <el-form :inline="true" :model="filters" class="filter-form">
         <el-form-item>
-          <el-input v-model="filters.appName" placeholder="应用名" />
+          <el-input v-model="filters.appName" placeholder="应用名" clearable />
         </el-form-item>
         <el-form-item>
-          <el-input v-model="filters.username" placeholder="用户名" />
+          <el-input v-model="filters.username" placeholder="用户名" clearable />
         </el-form-item>
         <el-form-item>
           <el-date-picker
@@ -21,6 +21,16 @@
           <el-button type="primary" @click="search">查询</el-button>
           <el-button @click="reset">重置</el-button>
         </el-form-item>
+        <div class="button-row">
+          <el-form-item>
+            <el-button type="success" @click="showRequestList = true"
+              >日志请求</el-button
+            >
+            <el-button type="warning" @click="showSendRequest = true"
+              >发送请求</el-button
+            >
+          </el-form-item>
+        </div>
       </el-form>
     </div>
 
@@ -71,15 +81,23 @@
         @size-change="onSizeChange"
       />
     </div>
+
+    <!-- 日志请求列表弹出层 -->
+    <LogRequestDrawer v-model="showRequestList" />
+
+    <!-- 发送日志请求弹出层 -->
+    <SendRequestDrawer v-model="showSendRequest" :username="filters.username" />
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, onMounted, watch } from "vue";
+import { ref, reactive, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
-import { getLogsList, LogItem } from "@/api/logs";
+import { getLogsList, type LogItem } from "@/api/logs";
 import { formatDate } from "@/utils/index";
+import LogRequestDrawer from "./components/LogRequestDrawer.vue";
+import SendRequestDrawer from "./components/SendRequestDrawer.vue";
 
 const router = useRouter();
 const loading = ref(false);
@@ -88,8 +106,15 @@ const total = ref(0);
 const pageNum = ref(1);
 const pageSize = ref(10);
 
-const filters = reactive({ appName: "", username: "" });
+const filters = reactive({
+  appName: "",
+  username: "",
+});
 const dateRange = ref<[string, string] | null>(null);
+
+// Drawer controls
+const showRequestList = ref(false);
+const showSendRequest = ref(false);
 
 const fetch = async () => {
   try {
@@ -155,6 +180,17 @@ const formatDateRef = formatDate;
 }
 .filter-bar {
   margin-bottom: 12px;
+}
+.filter-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.filter-form :deep(.el-form-item) {
+  margin-bottom: 8px;
+}
+.button-row {
+  width: 100%;
 }
 .pagination {
   margin-top: 12px;

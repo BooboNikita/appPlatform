@@ -87,6 +87,7 @@ public class AppInfoServiceImpl implements AppInfoService {
         
         return dto;
     }
+    // A D B C C D A C B B C D D A B AC C B AD
 
     @Override
     public AppInfo uploadApp(MultipartFile file, AppInfo appInfo) throws IOException {

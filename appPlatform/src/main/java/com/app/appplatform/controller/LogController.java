@@ -3,7 +3,9 @@ package com.app.appplatform.controller;
 import com.app.appplatform.common.PageResult;
 import com.app.appplatform.common.Result;
 import com.app.appplatform.entity.LogInfo;
+import com.app.appplatform.entity.LogRequest;
 import com.app.appplatform.enums.BucketType;
+import com.app.appplatform.service.LogRequestService;
 import com.app.appplatform.service.LogService;
 import com.app.appplatform.service.MinioService;
 import jakarta.annotation.security.PermitAll;
@@ -20,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api-logs")
@@ -29,10 +32,13 @@ public class LogController {
 
     private final MinioService minioService;
 
+    private final LogRequestService logRequestService;
+
     @Autowired
-    public LogController(LogService logService, MinioService minioService) {
+    public LogController(LogService logService, MinioService minioService, LogRequestService logRequestService) {
         this.logService = logService;
         this.minioService = minioService;
+        this.logRequestService = logRequestService;
     }
 
     private static final Log logger = LogFactory.getLog(LogController.class);
@@ -51,7 +57,8 @@ public class LogController {
             @RequestParam String appName,
             @RequestParam String version,
             @RequestParam String imageUrls,
-            @RequestParam String problem) throws IOException {
+            @RequestParam String problem,
+            @RequestParam(required = false, defaultValue = "false") Boolean isActiveUpload) throws IOException {
 
         if (files == null || files.length == 0) {
             return ResponseEntity.ok()
@@ -95,6 +102,15 @@ public class LogController {
         logInfo.setProblem(problem);
 
         logService.save(logInfo);
+
+        // 如果是主动上传，更新对应用户的logRequest记录状态为已上传
+        if (Boolean.TRUE.equals(isActiveUpload)) {
+            try {
+                logRequestService.markAsUploadedByUsername(username);
+            } catch (Exception e) {
+                logger.warn("更新日志请求状态失败, username: " + username, e);
+            }
+        }
 
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
@@ -153,10 +169,96 @@ public class LogController {
      * 删除日志记录
      */
     @DeleteMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Result<Void>> deleteLog(@PathVariable("id") Integer id) {
+    public ResponseEntity<Result<Void>> deleteLog(@PathVariable Integer id) {
         logService.deleteLog(id);
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Result.success(null));
+    }
+
+    /**
+     * 后台创建日志请求
+     * 请求App上传日志，记录到数据库并设置超时时间
+     */
+    @PostMapping(value = "/request", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Result<LogRequest>> createLogRequest(
+            @RequestParam String username,
+            @RequestParam(required = false) Integer timeoutMinutes) {
+        try {
+            LogRequest logRequest = logRequestService.createLogRequest(username, timeoutMinutes);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Result.success("日志请求创建成功", logRequest));
+        } catch (Exception e) {
+            logger.error("创建日志请求失败", e);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Result.error(500, "创建日志请求失败: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * App查询日志请求
+     * 检查是否有需要上传的日志请求，如有则说明App需要主动上传日志
+     * 多次请求也只上传一次，只返回是否有待上传请求（布尔值）
+     */
+    @PermitAll()
+    @GetMapping(value = "/request/check", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Result<Boolean>> checkLogRequest(
+            @RequestParam String username) {
+        try {
+            // 查询是否有待上传的日志请求
+            LogRequest pendingRequest = logRequestService.getPendingLogRequest(username);
+            boolean hasPendingRequest = pendingRequest != null;
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Result.success(hasPendingRequest));
+        } catch (Exception e) {
+            logger.error("查询日志请求失败", e);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Result.error(500, "查询日志请求失败: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * 管理平台查询已发送的日志请求
+     * 支持根据请求日期、status过滤
+     */
+    @GetMapping(value = "/request/list", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Result<List<LogRequest>>> getLogRequestList(
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
+        try {
+            List<LogRequest> list = logRequestService.getLogRequestList(username, status, startDate, endDate);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Result.success(list));
+        } catch (Exception e) {
+            logger.error("查询日志请求列表失败", e);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Result.error(500, "查询日志请求列表失败: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * 删除单个日志请求
+     */
+    @DeleteMapping(value = "/request/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Result<Void>> deleteLogRequest(@PathVariable Integer id) {
+        try {
+            logRequestService.deleteLogRequest(id);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Result.success("删除成功", null));
+        } catch (Exception e) {
+            logger.error("删除日志请求失败", e);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Result.error(500, "删除日志请求失败: " + e.getMessage()));
+        }
     }
 }
