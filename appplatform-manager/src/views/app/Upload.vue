@@ -3,6 +3,13 @@
     <el-card>
       <template #header>
         <div class="card-header">
+          <el-button
+            @click="goBack"
+            icon="ArrowLeft"
+            size="small"
+            style="margin-right: 12px"
+            >返回</el-button
+          >
           <span>{{ isEdit ? "编辑应用" : "上传应用" }}</span>
         </div>
       </template>
@@ -102,7 +109,7 @@ import {
   type FormRules,
   type UploadProps,
 } from "element-plus";
-import { UploadFilled } from "@element-plus/icons-vue";
+import { UploadFilled, ArrowLeft } from "@element-plus/icons-vue";
 import { uploadApp, getAppById, updateApp } from "@/api/app";
 
 const router = useRouter();
@@ -112,6 +119,10 @@ const loading = ref(false);
 const fileList = ref<any[]>([]);
 const isEdit = ref(false);
 const editId = ref<number | null>(null);
+
+const goBack = () => {
+  router.back();
+};
 
 const form = reactive({
   appName: "监督监管",

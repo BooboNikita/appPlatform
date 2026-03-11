@@ -1,64 +1,71 @@
 <template>
-  <div class="log-detail">
-    <div class="left">
-      <el-card>
-        <h3>文件列表</h3>
-        <div class="file-list-scroll">
-          <div v-for="(f, idx) in files" :key="idx">
-            <el-tooltip
-              class="file-button"
-              :content="fName(f)"
-              effect="dark"
-              placement="left-start"
-            >
-              <el-button type="text" @click="selectFile(f)">
-                {{ fName(f) }}
-              </el-button>
-            </el-tooltip>
-          </div>
-        </div>
-      </el-card>
+  <div class="log-detail-container">
+    <div class="header-bar">
+      <el-button @click="goBack" icon="ArrowLeft">返回列表</el-button>
     </div>
-
-    <div class="right">
-      <el-card class="file-card">
-        <div class="file-toolbar">
-          <div class="toolbar-left">
-            <span class="file-title">{{ currentFileName }}</span>
+    <div class="log-detail">
+      <div class="left">
+        <el-card>
+          <h3>文件列表</h3>
+          <div class="file-list-scroll">
+            <div v-for="(f, idx) in files" :key="idx">
+              <el-tooltip
+                class="file-button"
+                :content="fName(f)"
+                effect="dark"
+                placement="left-start"
+              >
+                <el-button type="text" @click="selectFile(f)">
+                  {{ fName(f) }}
+                </el-button>
+              </el-tooltip>
+            </div>
           </div>
-          <div class="toolbar-right">
-            <el-button size="small" @click="toggleWrap">
-              {{ wrap ? "换行: 开" : "换行: 关" }}
-            </el-button>
-            <el-button size="small" @click="decreaseFont">A-</el-button>
-            <el-button size="small" @click="increaseFont">A+</el-button>
-            <el-button size="small" @click="copyContent">复制</el-button>
-          </div>
-        </div>
+        </el-card>
+      </div>
 
-        <el-scrollbar class="file-scroll">
-          <pre
-            class="file-content"
-            :style="{
-              fontSize: fontSize + 'px',
-              overflowWrap: wrap ? 'anywhere' : 'normal',
-              wordBreak: wrap ? 'break-word' : 'normal',
-            }"
-            >{{ fileContent }}
-          </pre>
-        </el-scrollbar>
-      </el-card>
+      <div class="right">
+        <el-card class="file-card">
+          <div class="file-toolbar">
+            <div class="toolbar-left">
+              <span class="file-title">{{ currentFileName }}</span>
+            </div>
+            <div class="toolbar-right">
+              <el-button size="small" @click="toggleWrap">
+                {{ wrap ? "换行: 开" : "换行: 关" }}
+              </el-button>
+              <el-button size="small" @click="decreaseFont">A-</el-button>
+              <el-button size="small" @click="increaseFont">A+</el-button>
+              <el-button size="small" @click="copyContent">复制</el-button>
+            </div>
+          </div>
+
+          <el-scrollbar class="file-scroll">
+            <pre
+              class="file-content"
+              :style="{
+                fontSize: fontSize + 'px',
+                overflowWrap: wrap ? 'anywhere' : 'normal',
+                wordBreak: wrap ? 'break-word' : 'normal',
+              }"
+              >{{ fileContent }}
+            </pre>
+          </el-scrollbar>
+        </el-card>
+      </div>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { ref, onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
+import { ArrowLeft } from "@element-plus/icons-vue";
 import { getLogById, getLogFileContent } from "@/api/logs";
 
 const route = useRoute();
+const router = useRouter();
 const id = Number(route.params.id);
 
 const files = ref<string[]>([]);
@@ -69,6 +76,10 @@ const fileContent = ref("");
 // UI helpers for the log preview
 const wrap = ref(true);
 const fontSize = ref(13);
+
+const goBack = () => {
+  router.back();
+};
 
 const toggleWrap = () => {
   wrap.value = !wrap.value;
@@ -141,10 +152,19 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
+.log-detail-container {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.header-bar {
+  display: flex;
+  align-items: center;
+}
 .log-detail {
   display: flex;
   gap: 16px;
-  padding: 16px;
 }
 .left {
   width: 300px;
