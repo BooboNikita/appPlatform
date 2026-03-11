@@ -35,6 +35,9 @@
         </template>
       </el-table-column>
       <el-table-column label="截止时间" prop="deadline" align="center">
+        <template #default="{ row }">
+          {{ row.deadline || "无" }}
+        </template>
       </el-table-column>
       <el-table-column label="操作" align="center" width="200">
         <template #default="scope">
@@ -124,7 +127,7 @@ const rules = reactive<FormRules>({
   deptId: [{ required: true, message: "请输入部门ID", trigger: "blur" }],
   name: [{ required: true, message: "请输入组织名称", trigger: "blur" }],
   coverImage: [{ required: true, message: "请输入封面图URL", trigger: "blur" }],
-  deadline: [{ required: true, message: "请选择截止时间", trigger: "change" }],
+  deadline: [{ required: false, trigger: "change" }],
 });
 
 const fetchData = async () => {
