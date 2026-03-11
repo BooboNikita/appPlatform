@@ -9,6 +9,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -73,30 +74,32 @@ public class LogRequestServiceImpl implements LogRequestService {
         return logRequest;
     }
 
-    public List<LogRequest> getPendingLogRequests(String username) {
-        // 查询所有待上传请求，然后通过Redis判断是否过期
-        return logRequestMapper.findActiveByUsername(username);
-    }
-
     @Override
-    public LogRequest getPendingLogRequest(String username) {
-        // 查询最新的待上传请求
-        LogRequest logRequest = logRequestMapper.findLatestByUsername(username);
+    public List<LogRequest> getPendingLogRequest(String username) {
+        // 查询所有待上传的请求
+        List<LogRequest> pendingRequests = logRequestMapper.findActiveByUsername(username);
+        
+        if (pendingRequests.isEmpty()) {
+            return pendingRequests;
+        }
 
-        if (logRequest != null) {
-            // 从Redis检查是否过期
+        List<LogRequest> resultRequests = new ArrayList<>();
+        // 遍历检查每个请求是否过期
+        for (LogRequest logRequest : pendingRequests) {
             String redisKey = getRedisKey(logRequest.getId());
             String status = redisTemplate.opsForValue().get(redisKey);
 
             // 如果Redis中没有该key，说明已过期
             if (status == null && logRequest.getStatus() == 0) {
-                // 只更新待上传状态的记录为已过期
+                // 更新数据库状态为已过期
                 logRequestMapper.updateStatus(logRequest.getId(), 2);
-                return null;
+            } else {
+                // 未过期的请求加入结果列表
+                resultRequests.add(logRequest);
             }
         }
 
-        return logRequest;
+        return resultRequests;
     }
 
     @Override
@@ -118,14 +121,15 @@ public class LogRequestServiceImpl implements LogRequestService {
     @Override
     @Transactional
     public void markAsUploadedByUsername(String username) {
-        // 查询该用户是否有待上传的日志请求
-        LogRequest pendingRequest = getPendingLogRequest(username);
-        if (pendingRequest != null) {
-            // 删除Redis中的key
+        // 查询该用户所有待上传的日志请求
+        List<LogRequest> pendingRequests = getPendingLogRequest(username);
+        
+        // 删除所有待上传请求的Redis key并更新状态
+        for (LogRequest pendingRequest : pendingRequests) {
             String redisKey = getRedisKey(pendingRequest.getId());
             redisTemplate.delete(redisKey);
+            // 更新具体请求状态为已上传
+            logRequestMapper.updateStatus(pendingRequest.getId(), 1);
         }
-        // 更新数据库中该用户所有待上传记录为已上传
-        logRequestMapper.updateStatusToUploadedByUsername(username);
     }
 }

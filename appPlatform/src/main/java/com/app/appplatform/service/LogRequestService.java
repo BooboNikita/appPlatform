@@ -18,11 +18,11 @@ public interface LogRequestService {
     LogRequest createLogRequest(String username, Integer timeoutMinutes);
 
     /**
-     * 根据用户名查询待上传的日志请求（只取最新的一条，多次请求也只上传一次）
+     * 根据用户名查询待上传的日志请求列表
      * @param username 用户名
-     * @return 最新的待上传日志请求，如果没有则返回null
+     * @return 待上传的日志请求列表
      */
-    LogRequest getPendingLogRequest(String username);
+    List<LogRequest> getPendingLogRequest(String username);
 
     /**
      * 根据条件查询日志请求列表（管理平台使用）

@@ -209,9 +209,9 @@ public class LogController {
     public ResponseEntity<Result<Map<String, Boolean>>> checkLogRequest(
             @RequestParam String username) {
         try {
-            // 查询是否有待上传的日志请求
-            LogRequest pendingRequest = logRequestService.getPendingLogRequest(username);
-            boolean hasPendingRequest = pendingRequest != null;
+            // 查询所有待上传的日志请求
+            List<LogRequest> pendingRequests = logRequestService.getPendingLogRequest(username);
+            boolean hasPendingRequest = !pendingRequests.isEmpty();
             Map<String, Boolean> result = new HashMap<>();
             result.put("request", hasPendingRequest);
             return ResponseEntity.ok()
