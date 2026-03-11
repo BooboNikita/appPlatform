@@ -39,8 +39,10 @@
       <el-table-column prop="username" label="用户名" width="auto" />
       <el-table-column prop="nickname" label="昵称" width="auto" />
       <el-table-column prop="version" label="版本" width="auto" />
-      <el-table-column prop="uploadtime" label="时间" width="auto">
-        <template #default="{ row }">{{ formatDate(row.uploadtime) }}</template>
+      <el-table-column prop="uploadTime" label="时间" width="auto">
+        <template #default="{ row }">{{
+          formatDate(row.uploadTime, 8)
+        }}</template>
       </el-table-column>
       <el-table-column prop="imageUrls" label="图片" width="auto">
         <template #default="{ row }">
