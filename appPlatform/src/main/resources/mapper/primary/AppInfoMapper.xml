@@ -119,17 +119,17 @@
         </if>
     </select>
     
-    <select id="findLatestVersionByPackage" resultMap="BaseResultMap">
+    <select id="findUpdateVersionsByPackage" resultMap="BaseResultMap">
         SELECT * FROM app_info 
         WHERE packageName = #{packageName} 
         AND deleted = false 
         AND isBeta = false
+        AND (showUpdatePopup = 1 OR forceUpdate = 1)
         ORDER BY 
             CAST(SUBSTRING_INDEX(version, '.', 1) AS UNSIGNED) DESC,
             CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(version, '.', 2), '.', -1) AS UNSIGNED) DESC,
             CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(version, '.', -2), '.', 1) AS UNSIGNED) DESC,
             CAST(buildNumber AS UNSIGNED) DESC,
             createTime DESC
-        LIMIT 1
     </select>
 </mapper>

@@ -50,9 +50,9 @@ public interface AppInfoMapper {
     );
     
     /**
-     * 根据包名获取最新版本的应用信息
+     * 根据包名获取需要显示更新弹窗或强制更新的应用版本列表
      * @param packageName 包名
-     * @return 最新版本的应用信息
+     * @return 需要更新的应用版本列表
      */
-    AppInfo findLatestVersionByPackage(@Param("packageName") String packageName);
+    List<AppInfo> findUpdateVersionsByPackage(@Param("packageName") String packageName);
 }

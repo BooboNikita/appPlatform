@@ -273,22 +273,17 @@ public class AppInfoServiceImpl implements AppInfoService {
 
         String currentVersion = AppInfoUtil.parseAppInfo(appInfoHeader).getVersion();
 
-        // 获取最新版本信息
-        AppInfo latestApp = appInfoMapper.findLatestVersionByPackage(appPackageName);
-        if (latestApp == null) {
-            // 没有找到应用，返回无更新
+        // 获取需要更新的版本列表（showUpdatePopup或forceUpdate为true）
+        List<AppInfo> updateVersions = appInfoMapper.findUpdateVersionsByPackage(appPackageName);
+        if (updateVersions == null || updateVersions.isEmpty()) {
+            // 没有找到需要更新的版本，返回无更新
             AppVersionCheckDto result = new AppVersionCheckDto();
             result.setHasUpdate(false);
             return result;
         }
 
-        // 检查该版本是否显示更新弹窗
-        if (!latestApp.getShowUpdatePopup()) {
-            // 如果该版本不显示弹窗，返回无更新
-            AppVersionCheckDto result = new AppVersionCheckDto();
-            result.setHasUpdate(false);
-            return result;
-        }
+        // 获取最新版本的更新信息
+        AppInfo latestApp = updateVersions.get(0);
 
         // 解析设备信息获取品牌
         String deviceBrand = DeviceUtil.parseDeviceBrand(deviceInfoHeader);
