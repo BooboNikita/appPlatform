@@ -26,19 +26,28 @@ public class PerformanceReviewServiceImpl implements PerformanceReviewService {
     @Override
     public String getCoverImage(String deptId) {
         PerformanceReview config = performanceReviewMapper.findByDeptId(deptId);
-        return config != null ? config.getCoverImage() : null;
+        if (config == null) {
+            return null;
+        }
+        return config.getCoverImage() != null ? config.getCoverImage() : "";
     }
 
     @Override
     public String getDeadline(String deptId) {
         PerformanceReview config = performanceReviewMapper.findByDeptId(deptId);
-        return config != null ? config.getDeadline() : null;
+        if (config == null) {
+            return null;
+        }
+        return config.getDeadline() != null ? config.getDeadline() : "";
     }
 
     @Override
     public String getName(String deptId) {
         PerformanceReview config = performanceReviewMapper.findByDeptId(deptId);
-        return config != null ? config.getName() : null;
+        if (config == null) {
+            return null;
+        }
+        return config.getName() != null ? config.getName() : "";
     }
 
     @Override
