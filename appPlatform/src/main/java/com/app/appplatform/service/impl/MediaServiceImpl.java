@@ -3,8 +3,9 @@ package com.app.appplatform.service.impl;
 import com.app.appplatform.enums.BucketType;
 import com.app.appplatform.service.MediaService;
 import com.app.appplatform.service.MinioService;
-import com.app.appplatform.util.FileDownloadUtil;
+import io.minio.StatObjectResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
@@ -13,12 +14,10 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 public class MediaServiceImpl implements MediaService {
 
     private final MinioService minioService;
-    private final FileDownloadUtil fileDownloadUtil;
 
     @Autowired
-    public MediaServiceImpl(MinioService minioService, FileDownloadUtil fileDownloadUtil) {
+    public MediaServiceImpl(MinioService minioService) {
         this.minioService = minioService;
-        this.fileDownloadUtil = fileDownloadUtil;
     }
 
     @Override
@@ -26,14 +25,28 @@ public class MediaServiceImpl implements MediaService {
         // 获取文件扩展名以确定Content-Type
         String contentType = getContentType(objectName);
         
-        ResponseEntity<StreamingResponseBody> response = fileDownloadUtil.downloadFile(objectName, BucketType.MEDIA);
+        // 获取文件信息
+        StatObjectResponse stat = minioService.getFileStat(objectName, BucketType.MEDIA);
         
-        // 重新构建ResponseEntity，添加预览相关的响应头
+        // 设置正确的响应头用于在线预览
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Type", contentType);
+        headers.add("Content-Disposition", "inline; filename=\"" + objectName + "\"");
+        headers.add("Cache-Control", "public, max-age=3600");
+        headers.add("Content-Length", String.valueOf(stat.size()));
+        
+        // 添加视频流支持的相关头
+        if (contentType.startsWith("video/")) {
+            headers.add("Accept-Ranges", "bytes");
+            headers.add("Connection", "keep-alive");
+        }
+        
+        // 获取流式响应体
+        StreamingResponseBody responseBody = minioService.downloadFileAsStream(objectName, BucketType.MEDIA);
+        
         return ResponseEntity.ok()
-                .contentType(org.springframework.http.MediaType.parseMediaType(contentType))
-                .header("Content-Disposition", "inline; filename=\"" + objectName + "\"")
-                .header("Cache-Control", "public, max-age=3600") // 缓存1小时
-                .body(response.getBody());
+                .headers(headers)
+                .body(responseBody);
     }
 
     private String getContentType(String objectName) {
