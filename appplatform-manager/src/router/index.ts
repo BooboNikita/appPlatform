@@ -65,13 +65,13 @@ const routes: Array<RouteRecordRaw> = [
         path: "/crash",
         name: "Crash",
         component: () => import("@/views/crash/List.vue"),
-        meta: { title: "崩溃管理", icon: "Warn" },
+        meta: { title: "崩溃管理", icon: "Warning" },
       },
       {
         path: "/crash/detail/:id",
         name: "CrashDetail",
         component: () => import("@/views/crash/Detail.vue"),
-        meta: { title: "崩溃详情", icon: "Warn", hiddenInMenu: true },
+        meta: { title: "崩溃详情", icon: "Warning", hiddenInMenu: true },
       },
       {
         path: "/modules",
