@@ -62,6 +62,18 @@ const routes: Array<RouteRecordRaw> = [
         meta: { title: "日志详情", icon: "Document", hiddenInMenu: true },
       },
       {
+        path: "/crash",
+        name: "Crash",
+        component: () => import("@/views/crash/List.vue"),
+        meta: { title: "崩溃管理", icon: "Warn" },
+      },
+      {
+        path: "/crash/detail/:id",
+        name: "CrashDetail",
+        component: () => import("@/views/crash/Detail.vue"),
+        meta: { title: "崩溃详情", icon: "Warn", hiddenInMenu: true },
+      },
+      {
         path: "/modules",
         name: "Modules",
         component: () => import("@/views/modules/List.vue"),
