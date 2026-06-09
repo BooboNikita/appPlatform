@@ -176,8 +176,10 @@ onMounted(async () => {
   display: flex;
   padding-bottom: 20px;
   flex-direction: column;
-  overflow-x: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   gap: 10px;
+  max-height: calc(100vh - 180px);
 }
 .file-button {
   display: flex;
