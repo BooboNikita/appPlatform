@@ -1,0 +1,176 @@
+version: '3.8'
+
+services:
+  # API Gateway
+  gateway:
+    build:
+      context: .
+      dockerfile: app-platform-gateway/Dockerfile
+    container_name: app-platform-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - NACOS_SERVER_ADDR=nacos:8848
+      - NACOS_NAMESPACE=app-platform
+      - JWT_SECRET=KzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Ng==
+    networks:
+      - app-platform-network
+
+  # 认证服务
+  auth-service:
+    build:
+      context: .
+      dockerfile: auth-service/Dockerfile
+    container_name: app-platform-auth-service
+    ports:
+      - "8001:8001"
+    environment:
+      - NACOS_SERVER_ADDR=nacos:8848
+      - NACOS_NAMESPACE=app-platform
+      - DB_HOST=host.docker.internal
+      - DB_PORT=3306
+      - DB_USERNAME=root
+      - DB_PASSWORD=123456
+      - JWT_SECRET=KzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Ng==
+    networks:
+      - app-platform-network
+
+  # 应用管理服务
+  app-service:
+    build:
+      context: .
+      dockerfile: app-service/Dockerfile
+    container_name: app-platform-app-service
+    ports:
+      - "8002:8002"
+    environment:
+      - NACOS_SERVER_ADDR=nacos:8848
+      - NACOS_NAMESPACE=app-platform
+      - DB_HOST=host.docker.internal
+      - DB_PORT=3306
+      - DB_USERNAME=root
+      - DB_PASSWORD=123456
+      - MINIO_ENDPOINT=http://172.16.110.45:19000
+      - MINIO_ACCESS_KEY=minio
+      - MINIO_SECRET_KEY=Rh6SpXFthbZkHRDR
+    networks:
+      - app-platform-network
+
+  # 日志服务
+  log-service:
+    build:
+      context: .
+      dockerfile: log-service/Dockerfile
+    container_name: app-platform-log-service
+    ports:
+      - "8003:8003"
+    environment:
+      - NACOS_SERVER_ADDR=nacos:8848
+      - NACOS_NAMESPACE=app-platform
+      - DB_HOST=host.docker.internal
+      - DB_PORT=3306
+      - DB_USERNAME=root
+      - DB_PASSWORD=123456
+      - MINIO_ENDPOINT=http://172.16.110.45:19000
+      - MINIO_ACCESS_KEY=minio
+      - MINIO_SECRET_KEY=Rh6SpXFthbZkHRDR
+    networks:
+      - app-platform-network
+
+  # 事件追踪服务
+  event-service:
+    build:
+      context: .
+      dockerfile: event-service/Dockerfile
+    container_name: app-platform-event-service
+    ports:
+      - "8004:8004"
+    environment:
+      - NACOS_SERVER_ADDR=nacos:8848
+      - NACOS_NAMESPACE=app-platform
+      - DB_HOST=host.docker.internal
+      - DB_PORT=3306
+      - DB_USERNAME=root
+      - DB_PASSWORD=123456
+      - RABBITMQ_HOST=172.16.110.45
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=rabbitmq
+      - RABBITMQ_PASSWORD=fDAD4pRykTaNPtEr
+    networks:
+      - app-platform-network
+
+  # 崩溃报告服务
+  crash-service:
+    build:
+      context: .
+      dockerfile: crash-service/Dockerfile
+    container_name: app-platform-crash-service
+    ports:
+      - "8005:8005"
+    environment:
+      - NACOS_SERVER_ADDR=nacos:8848
+      - NACOS_NAMESPACE=app-platform
+      - DB_HOST=host.docker.internal
+      - DB_PORT=3306
+      - DB_USERNAME=root
+      - DB_PASSWORD=123456
+    networks:
+      - app-platform-network
+
+  # 文件存储服务
+  file-service:
+    build:
+      context: .
+      dockerfile: file-service/Dockerfile
+    container_name: app-platform-file-service
+    ports:
+      - "8007:8007"
+    environment:
+      - NACOS_SERVER_ADDR=nacos:8848
+      - NACOS_NAMESPACE=app-platform
+      - MINIO_ENDPOINT=http://172.16.110.45:19000
+      - MINIO_ACCESS_KEY=minio
+      - MINIO_SECRET_KEY=Rh6SpXFthbZkHRDR
+    networks:
+      - app-platform-network
+
+  # 商店链接服务
+  store-service:
+    build:
+      context: .
+      dockerfile: store-service/Dockerfile
+    container_name: app-platform-store-service
+    ports:
+      - "8008:8008"
+    environment:
+      - NACOS_SERVER_ADDR=nacos:8848
+      - NACOS_NAMESPACE=app-platform
+      - DB_HOST=host.docker.internal
+      - DB_PORT=3306
+      - DB_USERNAME=root
+      - DB_PASSWORD=123456
+    networks:
+      - app-platform-network
+
+  # 绩效评估服务
+  perf-service:
+    build:
+      context: .
+      dockerfile: perf-service/Dockerfile
+    container_name: app-platform-perf-service
+    ports:
+      - "8009:8009"
+    environment:
+      - NACOS_SERVER_ADDR=nacos:8848
+      - NACOS_NAMESPACE=app-platform
+      - DB_HOST=host.docker.internal
+      - DB_PORT=3306
+      - DB_USERNAME=root
+      - DB_PASSWORD=123456
+    networks:
+      - app-platform-network
+
+networks:
+  app-platform-network:
+    driver: bridge
+    name: app-platform-network

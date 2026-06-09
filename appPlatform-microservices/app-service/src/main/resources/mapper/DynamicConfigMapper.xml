@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.app.app.mapper.DynamicConfigMapper">
+
+    <resultMap id="BaseResultMap" type="com.app.app.entity.DynamicConfig">
+        <id column="id" property="id"/>
+        <result column="version_range" property="versionRange"/>
+        <result column="file_path" property="fileUrl"/>
+        <result column="env" property="env"/>
+        <result column="remark" property="remark"/>
+        <result column="created_at" property="createTime"/>
+        <result column="updated_at" property="updateTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, version_range, file_path, env, remark, created_at, updated_at
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO dynamic_config (version_range, file_path, env, remark, created_at, updated_at)
+        VALUES (#{versionRange}, #{fileUrl}, #{env}, #{remark}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM dynamic_config
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM dynamic_config
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="selectByEnv" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM dynamic_config
+        WHERE env = #{env}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="selectLatestByVersionAndEnv" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM dynamic_config
+        WHERE env = #{env}
+        AND (
+            version_range = #{version}
+            OR (version_range LIKE '%-%' AND
+                SUBSTRING_INDEX(version_range, '-', 1) &lt;= #{version}
+                AND SUBSTRING_INDEX(version_range, '-', -1) &gt;= #{version})
+        )
+        ORDER BY created_at DESC
+        LIMIT 1
+    </select>
+
+    <update id="update">
+        UPDATE dynamic_config
+        <set>
+            <if test="versionRange != null">version_range = #{versionRange},</if>
+            <if test="fileUrl != null">file_path = #{fileUrl},</if>
+            <if test="env != null">env = #{env},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            updated_at = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM dynamic_config WHERE id = #{id}
+    </delete>
+
+</mapper>

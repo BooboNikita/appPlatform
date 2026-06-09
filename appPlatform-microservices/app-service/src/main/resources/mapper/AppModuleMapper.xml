@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.app.app.mapper.AppModuleMapper">
+
+    <resultMap id="BaseResultMap" type="com.app.app.entity.AppModule">
+        <id column="id" property="id"/>
+        <result column="title" property="title"/>
+        <result column="icon_url" property="iconUrl"/>
+        <result column="target_url" property="targetUrl"/>
+        <result column="port" property="port"/>
+        <result column="color" property="color"/>
+        <result column="route" property="route"/>
+        <result column="sort_order" property="sortOrder"/>
+        <result column="is_active" property="isActive"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="hide_for_test" property="hideForTest"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, title, icon_url, target_url, port, color, route, sort_order, is_active, created_at, updated_at, hide_for_test
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO app_module (title, icon_url, target_url, port, color, route, sort_order, is_active, created_at, updated_at, hide_for_test)
+        VALUES (#{title}, #{iconUrl}, #{targetUrl}, #{port}, #{color}, #{route}, #{sortOrder}, #{isActive}, #{createdAt}, #{updatedAt}, #{hideForTest})
+    </insert>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM app_module
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM app_module
+        ORDER BY sort_order ASC
+    </select>
+
+    <select id="selectActiveModules" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM app_module
+        WHERE is_active = 1
+        ORDER BY sort_order ASC
+    </select>
+
+    <select id="selectByTitle" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM app_module
+        WHERE title = #{title}
+    </select>
+
+    <update id="update">
+        UPDATE app_module
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="iconUrl != null">icon_url = #{iconUrl},</if>
+            <if test="targetUrl != null">target_url = #{targetUrl},</if>
+            <if test="port != null">port = #{port},</if>
+            <if test="color != null">color = #{color},</if>
+            <if test="route != null">route = #{route},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="isActive != null">is_active = #{isActive},</if>
+            <if test="hideForTest">hide_for_test = #{hideForTest},</if>
+            updated_at = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM app_module WHERE id = #{id}
+    </delete>
+
+</mapper>

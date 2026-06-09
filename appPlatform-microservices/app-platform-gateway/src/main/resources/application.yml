@@ -1,0 +1,98 @@
+spring:
+  application:
+    name: app-platform-gateway
+  config:
+    import: "optional:nacos:${spring.application.name}.yml"
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:localhost:8848}
+        username: nacos
+        password: nacos
+        namespace: ${NACOS_NAMESPACE:app-platform}
+        group: DEFAULT_GROUP
+      config:
+        server-addr: ${NACOS_SERVER_ADDR:localhost:8848}
+        username: nacos
+        password: nacos
+        namespace: ${NACOS_NAMESPACE:app-platform}
+        group: DEFAULT_GROUP
+        file-extension: yml
+        shared-configs:
+          - data-id: common.yml
+            group: DEFAULT_GROUP
+            refresh: true
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: crash-service
+          uri: lb://crash-service
+          predicates:
+            - Path=/api/crash/**
+        - id: app-service-modules
+          uri: lb://app-service
+          predicates:
+            - Path=/api-modules/**
+        - id: app-service-dynamic-config
+          uri: lb://app-service
+          predicates:
+            - Path=/api-dynamic-config/**
+        - id: app-service-info
+          uri: lb://app-service
+          predicates:
+            - Path=/api-app/**
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/auth/**
+        - id: log-service
+          uri: lb://log-service
+          predicates:
+            - Path=/api-logs/**
+        - id: event-service
+          uri: lb://event-service
+          predicates:
+            - Path=/api-events/**
+        - id: perf-service
+          uri: lb://perf-service
+          predicates:
+            - Path=/api-performance-review/**
+        - id: store-service
+          uri: lb://store-service
+          predicates:
+            - Path=/store-link-config/**
+        - id: file-service
+          uri: lb://file-service
+          predicates:
+            - Path=/api-files/**
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "http://127.0.0.1:5173,http://127.0.0.1:5174,http://127.0.0.1:5175,http://localhost:5173,http://localhost:5174,http://localhost:5175"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
+      httpclient:
+        connect-timeout: 5000
+        response-timeout: 30s
+
+# Actuator配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
+
+# 日志配置
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    com.app.gateway: DEBUG

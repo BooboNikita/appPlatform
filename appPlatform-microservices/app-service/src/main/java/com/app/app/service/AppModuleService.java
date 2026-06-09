@@ -1,0 +1,23 @@
+package com.app.app.service;
+
+import com.app.app.dto.AppModuleDto;
+import com.app.app.entity.AppModule;
+import org.springframework.http.HttpHeaders;
+
+import java.util.List;
+
+public interface AppModuleService {
+    List<AppModuleDto> getActiveModules(String username, HttpHeaders headers);
+
+    List<AppModule> getAllModules();
+
+    AppModule getModuleById(Long id);
+
+    void createModule(AppModule appModule);
+
+    void updateModule(AppModule appModule);
+
+    void deleteModule(Long id);
+
+    AppModuleDto checkHelperModuleExists(String username, HttpHeaders headers);
+}
