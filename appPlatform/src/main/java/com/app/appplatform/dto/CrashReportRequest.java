@@ -19,7 +19,6 @@ public class CrashReportRequest {
     
     private String crashId;
     
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
     private LocalDateTime timestamp;
     
     private String crashType;
