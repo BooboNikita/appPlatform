@@ -1,13 +1,13 @@
--- 创建动态配置历史版本表
+-- 创建动态配置历史版本表（整包快照）
 use app_platform;
 CREATE TABLE `dynamic_config_history` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `config_id` bigint(20) NOT NULL COMMENT '原配置ID',
   `version_range` varchar(255) NOT NULL COMMENT '版本范围或具体版本',
-  `file_url` varchar(500) NOT NULL COMMENT 'MinIO中的文件保存地址',
+  `snapshot_json` longtext COMMENT '整包快照JSON(含 items 与灰度名单)',
   `env` varchar(50) NOT NULL COMMENT '环境类型：prod(生产), test(测试)',
   `remark` text COMMENT '备注',
-  `operation_type` varchar(20) NOT NULL COMMENT '操作类型：CREATE(创建), UPDATE(更新), DELETE(删除)',
+  `operation_type` varchar(20) NOT NULL COMMENT '操作类型：CREATE(创建), UPDATE(更新), DELETE(删除), REVERT(回溯)',
   `operator` varchar(100) NOT NULL DEFAULT 'system' COMMENT '操作人',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`),

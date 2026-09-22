@@ -1,532 +1,579 @@
 <template>
   <div class="dynamic-config-container">
-    <el-container class="config-layout">
-      <!-- 左侧列表 -->
-      <el-aside width="350px" class="config-aside">
-        <div class="aside-header">
-          <span class="title">配置文件</span>
-          <el-button type="primary" size="small" @click="handleCreate">
-            <el-icon><Plus /></el-icon>新增配置
-          </el-button>
-        </div>
-        <div class="aside-search">
-          <el-input
-            v-model="searchQuery"
-            placeholder="搜索配置文件..."
-            clearable
-            prefix-icon="Search"
-          />
-        </div>
-        <el-scrollbar>
-          <div
-            v-for="item in filteredConfigList"
-            :key="item.id"
-            :class="['config-item', { active: selectedConfig?.id === item.id }]"
-            @click="handleSelect(item)"
-          >
-            <div class="config-item-info">
-              <div class="config-filename">
-                {{ item.remark || "未命名配置" }}
-              </div>
-              <div class="config-meta">
-                <el-tag
-                  size="small"
-                  :type="item.env === 'prod' ? 'danger' : 'warning'"
-                  >{{ item.env === "prod" ? "生产" : "测试" }}</el-tag
-                >
-                <el-tag size="small" type="info" style="margin-left: 5px">{{
-                  item.versionRange
-                }}</el-tag>
-                <span class="config-time">{{
-                  formatDate(item.updateTime)
-                }}</span>
-              </div>
-            </div>
-          </div>
-          <el-empty
-            v-if="filteredConfigList.length === 0"
-            description="暂无配置"
-          />
-        </el-scrollbar>
-      </el-aside>
+    <el-card shadow="never">
+      <!-- 筛选栏 -->
+      <div class="filter-bar">
+        <el-select
+          v-model="filters.env"
+          placeholder="环境"
+          clearable
+          style="width: 130px"
+        >
+          <el-option label="生产 (prod)" value="prod" />
+          <el-option label="测试 (test)" value="test" />
+        </el-select>
+        <el-input
+          v-model="filters.versionRange"
+          placeholder="版本范围"
+          clearable
+          style="width: 150px"
+        />
+        <el-input
+          v-model="filters.domain"
+          placeholder="所属域"
+          clearable
+          style="width: 130px"
+        />
+        <el-input
+          v-model="filters.keyword"
+          placeholder="关键字（域/配置项/备注）"
+          clearable
+          style="width: 200px"
+          @keyup.enter="fetchList"
+        />
+        <el-button type="primary" @click="fetchList">查询</el-button>
+        <el-button @click="resetFilters">重置</el-button>
+      </div>
 
-      <!-- 右侧内容 -->
-      <el-main class="config-main">
-        <div v-if="selectedConfig" class="editor-container">
-          <div class="editor-header">
-            <div class="header-left">
-              <span class="selected-title">{{
-                selectedConfig.remark || "未命名配置"
-              }}</span>
-              <el-tag
-                size="small"
-                effect="plain"
-                type="success"
-                style="margin-left: 10px"
-                >ID: {{ selectedConfig.id }}</el-tag
-              >
-            </div>
-            <div class="header-actions">
-              <el-button type="info" plain @click="historyDrawerVisible = true"
-                >历史版本</el-button
-              >
-              <el-button type="danger" plain @click="handleDelete"
-                >删除</el-button
-              >
-              <el-button type="primary" :loading="saving" @click="handleSave"
-                >保存修改</el-button
-              >
-            </div>
-          </div>
+      <!-- 工具栏 -->
+      <div class="toolbar">
+        <el-button type="primary" @click="openUpload"
+          ><el-icon><Plus /></el-icon>&nbsp;上传JSON（整包拆解）</el-button
+        >
+        <el-button type="warning" plain @click="openAddItem"
+          ><el-icon><Plus /></el-icon>&nbsp;添加配置项</el-button
+        >
+        <el-button type="success" plain @click="openPreview"
+          >下发JSON预览</el-button
+        >
+        <el-button
+          type="info"
+          plain
+          :disabled="!selectedRow"
+          @click="openHistoryDrawer"
+          >整包历史</el-button
+        >
+        <el-button @click="fetchList">刷新</el-button>
+      </div>
 
-          <el-form :model="editForm" label-width="100px" class="config-form">
-            <el-form-item label="版本范围">
-              <el-input
-                v-model="editForm.versionRange"
-                placeholder="例如: 1.2.0, 1.0.0-2.0.0, 1.5.0+ 或 *"
-              />
-              <div class="input-tip">
-                规则：精确匹配(1.2.0)、范围(1.0.0-2.0.0)、起始(1.5.0+)、通配符(*)
-              </div>
-            </el-form-item>
-            <el-form-item label="环境">
-              <el-select
-                v-model="editForm.env"
-                placeholder="请选择环境"
-                style="width: 100%"
-              >
-                <el-option label="生产环境 (prod)" value="prod" />
-                <el-option label="测试环境 (test)" value="test" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="备注">
-              <el-input v-model="editForm.remark" placeholder="配置用途说明" />
-            </el-form-item>
-            <el-form-item label="配置内容">
-              <div class="json-editor-wrapper">
-                <codemirror
-                  v-model="editForm.content"
-                  placeholder="请输入 JSON 配置内容..."
-                  :style="{ height: '500px' }"
-                  :autofocus="true"
-                  :indent-with-tab="true"
-                  :tab-size="2"
-                  :extensions="extensions"
-                />
-              </div>
-            </el-form-item>
-          </el-form>
-        </div>
-        <el-empty v-else description="请从左侧选择一个配置文件进行查看或编辑" />
-      </el-main>
-    </el-container>
+      <!-- 配置项列表 -->
+      <el-table
+        v-loading="loading"
+        :data="itemList"
+        stripe
+        highlight-current-row
+        style="width: 100%"
+        @current-change="(row: DynamicConfigItem | null) => (selectedRow = row)"
+      >
+        <el-table-column prop="id" label="ID" width="70" />
+        <el-table-column
+          prop="versionRange"
+          label="版本范围"
+          width="120"
+          show-overflow-tooltip
+        />
+        <el-table-column label="环境" width="80">
+          <template #default="{ row }">
+            <el-tag
+              :type="row.env === 'prod' ? 'danger' : 'warning'"
+              size="small"
+              >{{ row.env }}</el-tag
+            >
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="domain"
+          label="所属域"
+          width="120"
+          show-overflow-tooltip
+        />
+        <el-table-column prop="itemKey" label="配置项" min-width="220" />
+        <el-table-column label="当前值" min-width="200" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span :class="valueClass(row.valueType)">{{ row.itemValue }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="更新时间" width="160">
+          <template #default="{ row }">{{
+            formatDate(row.updateTime, 8)
+          }}</template>
+        </el-table-column>
+        <el-table-column label="操作" width="120" fixed="right">
+          <template #default="{ row }">
+            <el-button link type="primary" @click="openDrawer(row)"
+              >编辑</el-button
+            >
+            <el-button link type="danger" @click="handleDeleteItem(row)"
+              >删除</el-button
+            >
+          </template>
+        </el-table-column>
+        <template #empty>暂无配置项，可上传整包 JSON 或单独添加配置项</template>
+      </el-table>
+    </el-card>
 
-    <!-- 新增配置对话框 -->
-    <el-dialog v-model="createDialogVisible" title="新增动态配置" width="800px">
-      <el-form :model="createForm" label-width="100px">
-        <el-form-item label="版本范围" required>
-          <el-input
-            v-model="createForm.versionRange"
-            placeholder="例如: 1.2.0, 1.0.0-2.0.0, 1.5.0+ 或 *"
-          />
-          <div class="input-tip">
-            支持：1.2.0 (精确)、1.0.0-2.0.0 (范围)、1.5.0+ (大于等于)、* (所有)
-          </div>
-        </el-form-item>
+    <!-- 添加配置项对话框 -->
+    <el-dialog v-model="addItemVisible" title="添加配置项" width="720px">
+      <el-form label-width="110px">
         <el-form-item label="环境" required>
-          <el-select
-            v-model="createForm.env"
-            placeholder="请选择环境"
-            style="width: 100%"
-          >
-            <el-option label="生产环境 (prod)" value="prod" />
-            <el-option label="测试环境 (test)" value="test" />
+          <el-select v-model="addItemForm.env" style="width: 300px">
+            <el-option label="生产 (prod)" value="prod" />
+            <el-option label="测试 (test)" value="test" />
           </el-select>
         </el-form-item>
-        <el-form-item label="备注">
-          <el-input v-model="createForm.remark" placeholder="配置用途说明" />
-        </el-form-item>
-        <el-form-item label="配置内容 (configs)" required>
-          <div class="json-editor-wrapper">
-            <codemirror
-              v-model="createForm.configs"
-              placeholder='请输入 configs 对象的 JSON 内容，例如: { "theme": "dark" }'
-              :style="{ height: '400px' }"
-              :indent-with-tab="true"
-              :tab-size="2"
-              :extensions="extensions"
-            />
+        <el-form-item label="版本范围" required>
+          <el-autocomplete
+            v-model="addItemForm.versionRange"
+            :fetch-suggestions="queryVersionRange"
+            clearable
+            placeholder="如 1.0.0-2.0.0 / 1.5.0 / *，可直接输入新范围"
+            style="width: 300px"
+          />
+          <div class="input-tip">
+            下发时按客户端版本匹配该范围；对应配置不存在时会自动创建，无需先上传整包
+            JSON
           </div>
+        </el-form-item>
+        <el-form-item label="所属域" required>
+          <el-select
+            v-model="addItemForm.domain"
+            filterable
+            allow-create
+            default-first-option
+            placeholder="选择已有域或输入新域"
+            style="width: 300px"
+          >
+            <el-option
+              v-for="d in domainOptions"
+              :key="d"
+              :label="d"
+              :value="d"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="配置项" required>
+          <el-input
+            v-model="addItemForm.itemKey"
+            placeholder="如 ai_entry"
+            style="width: 300px"
+          />
+        </el-form-item>
+        <el-form-item label="配置值" required>
+          <codemirror
+            v-model="addItemForm.itemValue"
+            :style="{ height: '180px', width: '100%' }"
+            :extensions="extensions"
+          />
+          <div class="input-tip">
+            支持 JSON 值：true/false、数字、字符串、对象、数组
+          </div>
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="addItemForm.remark" placeholder="备注（可选）" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="createDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="creating" @click="submitCreate"
-          >提交</el-button
+        <el-button @click="addItemVisible = false">取消</el-button>
+        <el-button type="primary" :loading="addingItem" @click="handleAddItem"
+          >确定</el-button
         >
       </template>
     </el-dialog>
 
-    <DiffConfirmDialog
-      v-model="diffConfirmVisible"
-      :title="diffConfirmTitle"
-      :meta-changes="diffConfirmMetaChanges"
-      :before-text="diffConfirmBeforeText"
-      :after-text="diffConfirmAfterText"
-      confirm-text="确认保存"
-      cancel-text="取消"
-      @confirm="handleDiffConfirm"
-      @cancel="handleDiffCancel"
+    <!-- 上传整包 JSON 对话框 -->
+    <el-dialog
+      v-model="uploadVisible"
+      title="上传动态配置（整包 JSON 拆解）"
+      width="820px"
+    >
+      <el-form label-width="110px">
+        <el-form-item label="版本范围" required>
+          <el-input
+            v-model="uploadForm.versionRange"
+            placeholder="如 1.0.0-2.0.0 / 1.5.0 / *"
+            style="width: 300px"
+          />
+        </el-form-item>
+        <el-form-item label="环境" required>
+          <el-select v-model="uploadForm.env" style="width: 300px">
+            <el-option label="生产 (prod)" value="prod" />
+            <el-option label="测试 (test)" value="test" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="uploadForm.remark" placeholder="备注（可选）" />
+        </el-form-item>
+        <el-form-item label="配置JSON" required>
+          <codemirror
+            v-model="uploadForm.content"
+            :style="{ height: '260px', width: '100%' }"
+            :extensions="extensions"
+          />
+          <div class="input-tip">
+            支持两种格式：{ 域: { 配置项: 值 } } 或 { metadata: {...}, configs:
+            { 域: { 配置项: 值 } } }。 相同 (环境+版本范围)
+            再次上传视为更新，已存在的配置项会保留其灰度配置。
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="uploadVisible = false">取消</el-button>
+        <el-button type="primary" :loading="uploading" @click="handleUpload"
+          >上传</el-button
+        >
+      </template>
+    </el-dialog>
+
+    <!-- 下发 JSON 预览对话框 -->
+    <el-dialog v-model="previewVisible" title="下发 JSON 预览" width="820px">
+      <div class="preview-bar">
+        <el-input
+          v-model="previewForm.version"
+          placeholder="客户端版本号，如 1.0.0"
+          style="width: 180px"
+        />
+        <el-select v-model="previewForm.env" style="width: 140px">
+          <el-option label="生产 (prod)" value="prod" />
+          <el-option label="测试 (test)" value="test" />
+        </el-select>
+        <el-input
+          v-model="previewForm.username"
+          placeholder="用户名（灰度判定，可留空）"
+          clearable
+          style="width: 220px"
+        />
+        <el-button type="primary" :loading="previewing" @click="handlePreview"
+          >预览</el-button
+        >
+      </div>
+      <div class="input-tip" style="margin: 8px 0 12px">
+        用户名留空时，灰度中的配置项不会下发；预览结果为只读。
+      </div>
+      <codemirror
+        v-model="previewContent"
+        :style="{ height: '340px', width: '100%' }"
+        :extensions="extensions"
+        :disabled="true"
+      />
+    </el-dialog>
+
+    <!-- 配置项统一抽屉（值编辑/状态/灰度/名单/历史） -->
+    <ItemDrawer
+      v-model="drawerVisible"
+      :item="drawerItem"
+      @changed="fetchList"
     />
 
+    <!-- 整包历史抽屉 -->
     <ConfigHistoryDrawer
       v-model="historyDrawerVisible"
-      :config-id="selectedConfig?.id || null"
-      :current-content="editForm.content"
-      :current-metadata="{
-        versionRange: editForm.versionRange,
-        env: editForm.env,
-        remark: editForm.remark,
-      }"
-      @revert-success="handleRevertSuccess"
+      :config-id="selectedRow ? selectedRow.configId : null"
+      :current-content="drawerCurrentContent"
+      :current-metadata="drawerCurrentMetadata"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { onMounted, reactive, ref, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Search, Plus } from "@element-plus/icons-vue";
-import moment from "moment";
+import { Plus } from "@element-plus/icons-vue";
 import { Codemirror } from "vue-codemirror";
 import { json } from "@codemirror/lang-json";
 import { oneDark } from "@codemirror/theme-one-dark";
 import {
+  getDynamicConfigItems,
   getDynamicConfigList,
-  getDynamicConfigContent,
-  updateDynamicConfigContent,
+  addDynamicConfigItem,
+  deleteDynamicConfigItem,
   uploadDynamicConfig,
-  deleteDynamicConfig,
-  type DynamicConfig,
+  previewDynamicConfig,
+  getDynamicConfigContent,
+  DynamicConfig,
+  DynamicConfigItem,
 } from "@/api/dynamicConfig";
-import { formatDate } from "../../utils/index";
-import DiffConfirmDialog from "@/components/DiffConfirmDialog.vue";
+import ItemDrawer from "@/components/ItemDrawer.vue";
 import ConfigHistoryDrawer from "@/components/ConfigHistoryDrawer.vue";
+import { formatDate } from "../../utils/index";
 
-// Codemirror 配置
 const extensions = [json(), oneDark];
 
-// 状态变量
-const configList = ref<DynamicConfig[]>([]);
-const searchQuery = ref("");
-const selectedConfig = ref<DynamicConfig | null>(null);
+// ==================== 列表 ====================
+const filters = reactive({
+  env: "",
+  versionRange: "",
+  domain: "",
+  keyword: "",
+});
+const itemList = ref<DynamicConfigItem[]>([]);
 const loading = ref(false);
-const saving = ref(false);
-const creating = ref(false);
-const createDialogVisible = ref(false);
-const historyDrawerVisible = ref(false);
+const selectedRow = ref<DynamicConfigItem | null>(null);
 
-const editForm = ref({
-  versionRange: "",
-  remark: "",
-  env: "prod",
-  content: "", // 这里的 content 只包含 configs 对象
-});
-
-const originalEditForm = ref({
-  versionRange: "",
-  remark: "",
-  env: "prod",
-  content: "",
-});
-
-const diffConfirmVisible = ref(false);
-const diffConfirmTitle = ref("确认保存");
-const diffConfirmMetaChanges = ref<string[]>([]);
-const diffConfirmBeforeText = ref("");
-const diffConfirmAfterText = ref("");
-let diffConfirmResolve: ((ok: boolean) => void) | null = null;
-
-const createForm = ref({
-  versionRange: "*",
-  remark: "",
-  env: "prod",
-  configs: "{\n  \n}",
-});
-
-// 计算属性：过滤后的列表
-const filteredConfigList = computed(() => {
-  if (!searchQuery.value) return configList.value;
-  const query = searchQuery.value.toLowerCase();
-  return configList.value.filter(
-    (item) =>
-      (item.remark && item.remark.toLowerCase().includes(query)) ||
-      (item.versionRange && item.versionRange.toLowerCase().includes(query)),
-  );
-});
-
-// 获取列表
 const fetchList = async () => {
+  loading.value = true;
   try {
-    loading.value = true;
-    const res = await getDynamicConfigList();
-    configList.value = (res as any).data || [];
-  } catch (error) {
-    console.error("获取列表失败", error);
+    const res: any = await getDynamicConfigItems({
+      env: filters.env || undefined,
+      versionRange: filters.versionRange || undefined,
+      domain: filters.domain || undefined,
+      keyword: filters.keyword || undefined,
+    });
+    itemList.value = res?.data || [];
   } finally {
     loading.value = false;
   }
 };
 
-// 选择配置
-const handleSelect = async (item: DynamicConfig) => {
-  selectedConfig.value = item;
-  editForm.value.versionRange = item.versionRange;
-  editForm.value.env = item.env || "prod";
-  editForm.value.remark = item.remark || "";
-  editForm.value.content = "";
-  originalEditForm.value = {
-    versionRange: editForm.value.versionRange,
-    remark: editForm.value.remark,
-    env: editForm.value.env,
-    content: editForm.value.content,
-  };
+const resetFilters = () => {
+  filters.env = "";
+  filters.versionRange = "";
+  filters.domain = "";
+  filters.keyword = "";
+  fetchList();
+};
 
-  try {
-    const res = await getDynamicConfigContent(item.id);
-    const fullJson = (res as any).data;
-
-    if (fullJson) {
-      // 提取 env 和 configs
-      if (fullJson.metadata) {
-        editForm.value.env = fullJson.metadata.env || "production";
-      }
-      if (fullJson.configs) {
-        editForm.value.content = JSON.stringify(fullJson.configs, null, 2);
-      } else {
-        editForm.value.content = JSON.stringify(fullJson, null, 2);
-      }
-    }
-
-    originalEditForm.value = {
-      versionRange: editForm.value.versionRange,
-      remark: editForm.value.remark,
-      env: editForm.value.env,
-      content: editForm.value.content,
-    };
-  } catch (error) {
-    ElMessage.error("获取配置内容失败");
+const valueClass = (valueType: string) => {
+  switch (valueType) {
+    case "BOOLEAN":
+      return "vt-boolean";
+    case "NUMBER":
+      return "vt-number";
+    case "STRING":
+      return "vt-string";
+    default:
+      return "vt-json";
   }
 };
 
-const normalizeJsonText = (text: string) => {
+// ==================== 删除配置项 ====================
+const handleDeleteItem = async (row: DynamicConfigItem) => {
+  await ElMessageBox.confirm(
+    `确定删除配置项「${row.domain}.${row.itemKey}」吗？其灰度名单将一并删除。`,
+    "提示",
+    { type: "warning" },
+  );
+  await deleteDynamicConfigItem(row.id);
+  ElMessage.success("删除成功");
+  fetchList();
+};
+
+// ==================== 配置项抽屉 ====================
+const drawerVisible = ref(false);
+const drawerItem = ref<DynamicConfigItem | null>(null);
+
+const openDrawer = (row: DynamicConfigItem) => {
+  drawerItem.value = row;
+  drawerVisible.value = true;
+};
+
+// ==================== 添加配置项 ====================
+const addItemVisible = ref(false);
+const addingItem = ref(false);
+const configOptions = ref<DynamicConfig[]>([]);
+const domainOptions = ref<string[]>([]);
+const addItemForm = reactive({
+  env: "prod",
+  versionRange: "",
+  domain: "",
+  itemKey: "",
+  itemValue: "",
+  remark: "",
+});
+
+// 已有配置的版本范围（按当前环境过滤）作为联想建议，可直接输入新范围
+const versionOptions = computed(() =>
+  Array.from(
+    new Set(
+      configOptions.value
+        .filter((c) => c.env === addItemForm.env)
+        .map((c) => c.versionRange),
+    ),
+  ),
+);
+
+const queryVersionRange = (
+  queryString: string,
+  cb: (arr: { value: string }[]) => void,
+) => {
+  const all = versionOptions.value.map((v) => ({ value: v }));
+  const results = queryString
+    ? all.filter((o) =>
+        o.value.toLowerCase().includes(queryString.toLowerCase()),
+      )
+    : all;
+  cb(results);
+};
+
+const openAddItem = async () => {
+  addItemForm.env = "prod";
+  addItemForm.versionRange = "";
+  addItemForm.domain = "";
+  addItemForm.itemKey = "";
+  addItemForm.itemValue = "";
+  addItemForm.remark = "";
+  addItemVisible.value = true;
   try {
-    return JSON.stringify(JSON.parse(text), null, 2);
+    const [cfgRes, itemRes]: any[] = await Promise.all([
+      getDynamicConfigList(),
+      getDynamicConfigItems({}),
+    ]);
+    configOptions.value = cfgRes?.data || [];
+    domainOptions.value = Array.from(
+      new Set<string>(
+        ((itemRes?.data || []) as DynamicConfigItem[]).map((i) => i.domain),
+      ),
+    );
   } catch {
-    return text;
+    configOptions.value = [];
+    domainOptions.value = [];
   }
 };
 
-const requestDiffConfirm = (options: {
-  title?: string;
-  metaChanges?: string[];
-  beforeText: string;
-  afterText: string;
-}) => {
-  if (diffConfirmResolve) diffConfirmResolve(false);
-  diffConfirmTitle.value = options.title || "确认保存";
-  diffConfirmMetaChanges.value = options.metaChanges || [];
-  diffConfirmBeforeText.value = options.beforeText;
-  diffConfirmAfterText.value = options.afterText;
-  diffConfirmVisible.value = true;
-
-  return new Promise<boolean>((resolve) => {
-    diffConfirmResolve = resolve;
-  });
-};
-
-const handleDiffConfirm = () => {
-  if (diffConfirmResolve) diffConfirmResolve(true);
-  diffConfirmResolve = null;
-};
-
-const handleDiffCancel = () => {
-  if (diffConfirmResolve) diffConfirmResolve(false);
-  diffConfirmResolve = null;
-  diffConfirmVisible.value = false;
-};
-
-const handleRevertSuccess = () => {
-  if (selectedConfig.value) {
-    handleSelect(selectedConfig.value);
+const handleAddItem = async () => {
+  if (!addItemForm.versionRange.trim()) {
+    ElMessage.warning("请填写版本范围");
+    return;
   }
-};
-
-// 保存修改
-const handleSave = async () => {
-  if (!selectedConfig.value) return;
-
+  if (!addItemForm.domain.trim()) {
+    ElMessage.warning("请输入所属域");
+    return;
+  }
+  if (!addItemForm.itemKey.trim()) {
+    ElMessage.warning("请输入配置项名称");
+    return;
+  }
+  let parsed: any;
   try {
-    // 校验 JSON
-    let configsObj;
-    try {
-      configsObj = JSON.parse(editForm.value.content);
-    } catch (e) {
-      return ElMessage.error("JSON 格式错误，请检查内容");
-    }
-
-    const originalNormalized = normalizeJsonText(
-      originalEditForm.value.content,
-    );
-    const currentNormalized = normalizeJsonText(editForm.value.content);
-
-    const metaChanges: string[] = [];
-    if (originalEditForm.value.versionRange !== editForm.value.versionRange) {
-      metaChanges.push(
-        `版本范围: ${originalEditForm.value.versionRange} -> ${editForm.value.versionRange}`,
-      );
-    }
-    if (originalEditForm.value.env !== editForm.value.env) {
-      metaChanges.push(
-        `环境: ${originalEditForm.value.env} -> ${editForm.value.env}`,
-      );
-    }
-    if (originalEditForm.value.remark !== editForm.value.remark) {
-      metaChanges.push(
-        `备注: ${originalEditForm.value.remark || "(空)"} -> ${
-          editForm.value.remark || "(空)"
-        }`,
-      );
-    }
-
-    if (originalNormalized !== currentNormalized || metaChanges.length > 0) {
-      const ok = await requestDiffConfirm({
-        title: "确认保存",
-        metaChanges,
-        beforeText: originalNormalized,
-        afterText: currentNormalized,
-      });
-      if (!ok) return;
-    }
-
-    // 构造完整 JSON
-    const fullJson = {
-      metadata: {
-        configId: selectedConfig.value.id,
-        versionRange: editForm.value.versionRange,
-        publishTime: moment().format("YYYY-MM-DD HH:mm:ss"),
-        env: editForm.value.env,
-        remark: editForm.value.remark,
-      },
-      configs: configsObj,
-    };
-
-    saving.value = true;
-    await updateDynamicConfigContent(
-      selectedConfig.value.id,
-      JSON.stringify(fullJson, null, 2),
-      editForm.value.versionRange,
-      editForm.value.env,
-      editForm.value.remark,
-    );
-    ElMessage.success("保存成功");
-    originalEditForm.value = {
-      versionRange: editForm.value.versionRange,
-      remark: editForm.value.remark,
-      env: editForm.value.env,
-      content: editForm.value.content,
-    };
-    fetchList();
-  } catch (error) {
-    console.error("保存失败", error);
-  } finally {
-    saving.value = false;
+    parsed = JSON.parse(addItemForm.itemValue);
+  } catch {
+    ElMessage.error("配置值不是合法 JSON");
+    return;
   }
-};
-
-// 删除配置
-const handleDelete = () => {
-  if (!selectedConfig.value) return;
-
-  ElMessageBox.confirm(
-    `确定要删除配置 "${
-      selectedConfig.value.remark || selectedConfig.value.id
-    }" 吗？`,
-    "警告",
-    {
-      confirmButtonText: "确定",
-      cancelButtonText: "取消",
-      type: "warning",
-    },
-  ).then(async () => {
-    try {
-      await deleteDynamicConfig(selectedConfig.value!.id);
-      ElMessage.success("删除成功");
-      selectedConfig.value = null;
-      fetchList();
-    } catch (error) {
-      console.error("删除失败", error);
-    }
-  });
-};
-
-// 新增配置
-const handleCreate = () => {
-  createForm.value = {
-    versionRange: "*",
-    remark: "",
-    env: "prod",
-    configs: "{\n  \n}",
-  };
-  createDialogVisible.value = true;
-};
-
-const submitCreate = async () => {
-  if (!createForm.value.configs) {
-    return ElMessage.warning("请输入配置内容");
-  }
-
+  addingItem.value = true;
   try {
-    // 校验 JSON
-    let configsObj;
-    try {
-      configsObj = JSON.parse(createForm.value.configs);
-    } catch (e) {
-      return ElMessage.error("JSON 格式错误，请检查内容");
-    }
-
-    creating.value = true;
-
-    // 构造完整 JSON
-    const fullJson = {
-      metadata: {
-        configId: 0,
-        versionRange: createForm.value.versionRange,
-        publishTime: moment().format("YYYY-MM-DD HH:mm:ss"),
-        env: createForm.value.env,
-        remark: createForm.value.remark,
-      },
-      configs: configsObj,
-    };
-
-    const formData = new FormData();
-    const blob = new Blob([JSON.stringify(fullJson, null, 2)], {
-      type: "application/json",
+    await addDynamicConfigItem({
+      env: addItemForm.env,
+      versionRange: addItemForm.versionRange.trim(),
+      domain: addItemForm.domain.trim(),
+      itemKey: addItemForm.itemKey.trim(),
+      itemValue: JSON.stringify(parsed),
+      remark: addItemForm.remark || undefined,
     });
-    formData.append("file", blob, "config.json");
-    formData.append("versionRange", createForm.value.versionRange);
-    formData.append("env", createForm.value.env);
-    formData.append("remark", createForm.value.remark);
-
-    await uploadDynamicConfig(formData);
-    ElMessage.success("新增成功");
-    createDialogVisible.value = false;
+    ElMessage.success("添加成功");
+    addItemVisible.value = false;
     fetchList();
-  } catch (error) {
-    console.error("新增失败", error);
   } finally {
-    creating.value = false;
+    addingItem.value = false;
   }
+};
+
+// ==================== 上传整包 JSON ====================
+const uploadVisible = ref(false);
+const uploading = ref(false);
+const uploadForm = reactive({
+  versionRange: "",
+  env: "prod",
+  remark: "",
+  content: "",
+});
+
+const openUpload = () => {
+  uploadForm.versionRange = "";
+  uploadForm.env = "prod";
+  uploadForm.remark = "";
+  uploadForm.content = "";
+  uploadVisible.value = true;
+};
+
+const handleUpload = async () => {
+  if (!uploadForm.versionRange.trim()) {
+    ElMessage.warning("请输入版本范围");
+    return;
+  }
+  if (!uploadForm.content.trim()) {
+    ElMessage.warning("请输入配置 JSON");
+    return;
+  }
+  try {
+    JSON.parse(uploadForm.content);
+  } catch {
+    ElMessage.error("配置 JSON 格式不正确");
+    return;
+  }
+  uploading.value = true;
+  try {
+    const formData = new FormData();
+    formData.append(
+      "file",
+      new Blob([uploadForm.content], { type: "application/json" }),
+      "config.json",
+    );
+    formData.append("versionRange", uploadForm.versionRange.trim());
+    formData.append("env", uploadForm.env);
+    if (uploadForm.remark) formData.append("remark", uploadForm.remark);
+    await uploadDynamicConfig(formData);
+    ElMessage.success("上传成功，已拆解为配置项");
+    uploadVisible.value = false;
+    fetchList();
+  } finally {
+    uploading.value = false;
+  }
+};
+
+// ==================== 下发 JSON 预览 ====================
+const previewVisible = ref(false);
+const previewing = ref(false);
+const previewForm = reactive({ version: "", env: "prod", username: "" });
+const previewContent = ref("");
+
+const openPreview = () => {
+  previewForm.version = "";
+  previewForm.env = "prod";
+  previewForm.username = "";
+  previewContent.value = "";
+  previewVisible.value = true;
+};
+
+const handlePreview = async () => {
+  if (!previewForm.version.trim()) {
+    ElMessage.warning("请输入客户端版本号");
+    return;
+  }
+  previewing.value = true;
+  try {
+    const res: any = await previewDynamicConfig(
+      previewForm.version.trim(),
+      previewForm.env,
+      previewForm.username.trim() || undefined,
+    );
+    const data = res?.data;
+    previewContent.value = data
+      ? JSON.stringify(data, null, 2)
+      : "（未匹配到该版本与环境对应的配置）";
+  } finally {
+    previewing.value = false;
+  }
+};
+
+// ==================== 整包历史抽屉 ====================
+const historyDrawerVisible = ref(false);
+const drawerCurrentContent = ref("");
+const drawerCurrentMetadata = ref<any>(null);
+
+const openHistoryDrawer = async () => {
+  if (!selectedRow.value) return;
+  try {
+    const res: any = await getDynamicConfigContent(selectedRow.value.configId);
+    const full = res?.data;
+    drawerCurrentContent.value = full?.configs
+      ? JSON.stringify(full.configs, null, 2)
+      : "";
+    drawerCurrentMetadata.value = full?.metadata || null;
+  } catch {
+    drawerCurrentContent.value = "";
+    drawerCurrentMetadata.value = null;
+  }
+  historyDrawerVisible.value = true;
 };
 
 onMounted(() => {
@@ -534,129 +581,41 @@ onMounted(() => {
 });
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .dynamic-config-container {
-  height: calc(100vh - 100px);
-  padding: 20px;
-  background-color: #f5f7fa;
-
-  .config-layout {
-    height: 100%;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-  }
-
-  .json-editor-wrapper {
-    width: 100%;
-    border: 1px solid #dcdfe6;
-    border-radius: 4px;
-    overflow: hidden;
-
-    :deep(.cm-editor) {
-      font-size: 14px;
-    }
-  }
-
-  .config-aside {
-    border-right: 1px solid #ebeef5;
-    display: flex;
-    flex-direction: column;
-
-    .aside-header {
-      padding: 15px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #ebeef5;
-
-      .title {
-        font-size: 16px;
-        font-weight: bold;
-        color: #303133;
-      }
-    }
-
-    .aside-search {
-      padding: 10px 15px;
-    }
-
-    .config-item {
-      padding: 15px 20px;
-      cursor: pointer;
-      transition: all 0.3s;
-      border-bottom: 1px solid #f2f6fc;
-
-      &:hover {
-        background-color: #f5f7fa;
-      }
-
-      &.active {
-        background-color: #ecf5ff;
-        border-left: 4px solid #409eff;
-      }
-
-      .config-filename {
-        font-size: 14px;
-        color: #303133;
-        font-weight: 500;
-        margin-bottom: 8px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .config-meta {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-
-        .config-time {
-          font-size: 12px;
-          color: #909399;
-        }
-      }
-    }
-  }
-
-  .config-main {
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-
-    .input-tip {
-      font-size: 12px;
-      color: #909399;
-      line-height: 1.5;
-      margin-top: 4px;
-    }
-
-    .editor-container {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-
-      .editor-header {
-        padding: 15px 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid #ebeef5;
-
-        .selected-title {
-          font-size: 18px;
-          font-weight: bold;
-          color: #303133;
-        }
-      }
-
-      .config-form {
-        padding: 20px;
-        flex: 1;
-        overflow-y: auto;
-      }
-    }
-  }
+  padding: 16px;
+}
+.filter-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.input-tip {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  margin-top: 4px;
+}
+.preview-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.vt-boolean {
+  color: var(--el-color-success);
+}
+.vt-number {
+  color: var(--el-color-warning);
+}
+.vt-string {
+  color: var(--el-text-color-regular);
+}
+.vt-json {
+  color: var(--el-color-primary);
 }
 </style>

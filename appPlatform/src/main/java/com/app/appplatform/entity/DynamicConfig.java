@@ -20,11 +20,6 @@ public class DynamicConfig {
     private String versionRange;
 
     /**
-     * MinIO中的文件保存地址
-     */
-    private String fileUrl;
-
-    /**
      * 环境类型：prod(生产), test(测试)
      */
     private String env;

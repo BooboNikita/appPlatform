@@ -25,9 +25,9 @@ public class DynamicConfigHistory {
     private String versionRange;
 
     /**
-     * MinIO中的文件保存地址
+     * 整包快照JSON（含 items 与灰度名单）
      */
-    private String fileUrl;
+    private String snapshotJson;
 
     /**
      * 环境类型：prod(生产), test(测试)

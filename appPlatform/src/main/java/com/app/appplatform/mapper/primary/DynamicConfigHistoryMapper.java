@@ -7,24 +7,24 @@ import java.util.List;
 
 @Mapper
 public interface DynamicConfigHistoryMapper {
-    
-    @Insert("INSERT INTO dynamic_config_history(config_id, version_range, file_url, env, remark, operation_type, operator, create_time) " +
-            "VALUES(#{configId}, #{versionRange}, #{fileUrl}, #{env}, #{remark}, #{operationType}, #{operator}, NOW())")
+
+    String COLS = "id, config_id as configId, version_range as versionRange, snapshot_json as snapshotJson, env, remark, " +
+            "operation_type as operationType, operator, create_time as createTime";
+
+    @Insert("INSERT INTO dynamic_config_history(config_id, version_range, snapshot_json, env, remark, operation_type, operator, create_time) " +
+            "VALUES(#{configId}, #{versionRange}, #{snapshotJson}, #{env}, #{remark}, #{operationType}, #{operator}, NOW())")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(DynamicConfigHistory history);
 
-    @Select("SELECT id, config_id as configId, version_range as versionRange, file_url as fileUrl, env, remark, " +
-            "operation_type as operationType, operator, create_time as createTime FROM dynamic_config_history " +
+    @Select("SELECT " + COLS + " FROM dynamic_config_history " +
             "WHERE config_id = #{configId} ORDER BY create_time DESC")
     List<DynamicConfigHistory> findByConfigId(Long configId);
 
-    @Select("SELECT id, config_id as configId, version_range as versionRange, file_url as fileUrl, env, remark, " +
-            "operation_type as operationType, operator, create_time as createTime FROM dynamic_config_history " +
-            "WHERE id = #{historyId}")
+    @Select("SELECT " + COLS + " FROM dynamic_config_history WHERE id = #{historyId}")
     DynamicConfigHistory findById(Long historyId);
 
     @Select("<script>" +
-            "SELECT h.id, h.config_id as configId, h.version_range as versionRange, h.file_url as fileUrl, h.env, h.remark, " +
+            "SELECT h.id, h.config_id as configId, h.version_range as versionRange, h.snapshot_json as snapshotJson, h.env, h.remark, " +
             "h.operation_type as operationType, h.operator, h.create_time as createTime " +
             "FROM dynamic_config_history h " +
             "INNER JOIN dynamic_config c ON h.config_id = c.id " +

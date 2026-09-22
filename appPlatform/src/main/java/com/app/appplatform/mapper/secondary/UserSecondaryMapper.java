@@ -53,4 +53,18 @@ public interface UserSecondaryMapper {
             "</foreach>" +
             "</script>")
     List<Map<String, Object>> findNicknamesByUsernames(@Param("usernames") List<String> usernames);
+
+    /**
+     * 按昵称批量反查用户名
+     *
+     * @param nicknames 昵称列表
+     * @return 昵称到用户名的映射
+     */
+    @Select("<script>" +
+            "SELECT login_name as username, nick_name as nickname FROM ei_user WHERE nick_name IN " +
+            "<foreach collection='nicknames' item='nickname' open='(' separator=',' close=')'>" +
+            "#{nickname}" +
+            "</foreach>" +
+            "</script>")
+    List<Map<String, Object>> findUsernamesByNicknames(@Param("nicknames") List<String> nicknames);
 }
