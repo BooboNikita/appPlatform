@@ -1,4 +1,4 @@
-import request from "@/utils/request";
+import request, { getApiBaseUrl } from "@/utils/request";
 import {
   PageResult,
   TrackingEvent,
@@ -35,14 +35,8 @@ export const getAppEventDetail = (id: number) => {
  * 获取 WebSocket 连接地址
  */
 export const getAppEventWebSocketUrl = () => {
-  const baseUrl = import.meta.env.VITE_APP_API_BASE_URL || "";
-  //   const wsProtocol = location.protocol === "https:" ? "wss:" : "ws:";
-  const urlPre = baseUrl.startsWith("https")
-    ? baseUrl.replace("https", "wss")
-    : baseUrl.replace("http", "ws");
-  const wsProtocol = location.protocol === "https:" ? "wss:" : "ws:";
-  const url = `${urlPre}/ws`;
-  return url;
+  const baseUrl = getApiBaseUrl() || window.location.origin;
+  return `${baseUrl.replace(/^http/, "ws")}/ws`;
 };
 
 /**
@@ -53,7 +47,7 @@ export const getAppEventWebSocketUrl = () => {
  */
 export const createAppEventWebSocket = (
   url: string,
-  token?: string
+  token?: string,
 ): WebSocket => {
   const ws = new WebSocket(url);
   return ws;

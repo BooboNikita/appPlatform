@@ -7,9 +7,18 @@ import { ElMessage } from "element-plus";
 import { useUserStore } from "@/stores/user";
 import router from "@/router";
 
+// API 基础地址：生产环境通过 IP 访问时，请求跟随当前 host，避免固定指向配置的域名
+const envBaseUrl: string = import.meta.env.VITE_APP_API_BASE_URL || "";
+const isIpAccess =
+  import.meta.env.PROD &&
+  /^(\d{1,3}\.){3}\d{1,3}$/.test(window.location.hostname);
+
+export const getApiBaseUrl = (): string =>
+  isIpAccess ? window.location.origin : envBaseUrl;
+
 // 创建axios实例
 const service: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_APP_API_BASE_URL,
+  baseURL: getApiBaseUrl(),
   timeout: 30000, // 请求超时时间
   withCredentials: true, // 允许携带cookie
 });
@@ -28,7 +37,7 @@ service.interceptors.request.use(
   (error: any) => {
     console.error("Request Error:", error);
     return Promise.reject(error);
-  }
+  },
 );
 
 // 响应拦截器
@@ -91,7 +100,7 @@ service.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default service;
